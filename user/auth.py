@@ -3,9 +3,10 @@ from rest_framework.exceptions import AuthenticationFailed
 import jwt
 from django.conf import settings
 import datetime
+from .models import *
 
 
-def create_token(user, expdays=7):
+def create_token(user, expdays=365):
     headers = {
         'typ': 'jwt',
         'alg': 'HS256'
@@ -14,6 +15,7 @@ def create_token(user, expdays=7):
         'userid': user.id,
         'openid': user.openid,
         'exp': datetime.datetime.utcnow() + datetime.timedelta(days=expdays)
+        # 'exp': datetime.datetime.now(datetime.UTC) + datetime.timedelta(days=expdays)
     }
     # print(payload)
     token = jwt.encode(payload=payload, key=settings.SECRET_KEY, headers=headers, algorithm='HS256').decode('utf-8')
@@ -30,7 +32,7 @@ class MyJWTAuthentication(BaseAuthentication):
             # print(payload)
         except Exception as e:
             print(repr(e))
-            raise AuthenticationFailed({'ret': -1, 'errmsg': 'Token Authentication Failed'})
+            raise AuthenticationFailed({'ret': 444, 'errmsg': 'Token Authentication Failed'})
 
         return payload, token
 

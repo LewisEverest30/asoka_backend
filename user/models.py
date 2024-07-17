@@ -14,26 +14,6 @@ class User(models.Model):
         other = 0, _('其他')
         fo = 1, _('佛教')
 
-    class Mood_choices(models.IntegerChoices):
-        good = 0, _('好')
-        mid = 1, _('一般')
-        bad = 2, _('不好')
-
-    class Question_choices_two(models.IntegerChoices):
-        up = 0, _('选项一')
-        down = 1, _('选项二')
-
-    class Wish_choices(models.IntegerChoices):
-        career = 1, _('事业')
-        study = 2, _('学业')
-        wealth = 3, _('财富')
-        love = 4, _('爱情')
-        health = 5, _('健康')
-        safety = 6, _('安全')
-        family = 7, _('家庭')
-        happiness = 8, _('快乐')
-        shunyi = 9, _('万事顺意')
-
     class Identity_choices(models.IntegerChoices):
         ordinary = 0, _('普通')
         vip = 1, _('VIP')
@@ -53,17 +33,36 @@ class User(models.Model):
     mbti = models.CharField(verbose_name='MBTI', max_length=4, null=True, blank=True)
 
     # 其他信息
-    identity = models.IntegerField(verbose_name='用户身份', choices=Identity_choices.choices, null=True, blank=True)
-    
-    phone = models.CharField(verbose_name='手机号', max_length=11)
+    identity = models.IntegerField(verbose_name='用户身份', choices=Identity_choices.choices, default=0)
+    phone = models.CharField(verbose_name='手机号', max_length=11, null=True)
     create_time = models.DateTimeField(verbose_name='创建时间', auto_now_add=True) 
     update_time = models.DateTimeField(verbose_name='修改时间', auto_now=True)
     is_active = models.BooleanField(verbose_name='是否激活', default=True)
 
 
     def __str__(self) -> str:
-        return self.name
+        return f'{self.name}'
 
     class Meta:
         verbose_name = "用户"
         verbose_name_plural = "用户"
+
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = '__all__'
+
+
+class Address(models.Model):
+    user = models.ForeignKey(verbose_name='用户', to=User, on_delete=models.CASCADE)
+    recipient = models.CharField(verbose_name='收货人', max_length=15, null=False, blank=False)
+    phone = models.CharField(verbose_name='手机号', max_length=11, null=False, blank=False)
+    detailed_address = models.TextField(verbose_name='详细地址', null=False, blank=False)
+
+    def __str__(self):
+        return f"{self.user.name} - {self.recipient}"
+    
+
+class Accesstoken(models.Model):
+    access_token = models.CharField(max_length=1024, unique=True)
+    expire_time = models.DateTimeField()

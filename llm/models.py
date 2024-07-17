@@ -21,37 +21,39 @@ class Evalcontent(models.Model):
         bad = 2, _('不好')
 
     class Question_choices_two(models.IntegerChoices):
-        up = 0, _('选项一')
-        down = 1, _('选项二')
+        up = 1, _('选项一')
+        down = 2, _('选项二')
 
-    class Wish_choices(models.IntegerChoices):
-        career = 1, _('事业')
-        study = 2, _('学业')
-        wealth = 3, _('财富')
-        love = 4, _('爱情')
-        health = 5, _('健康')
-        safety = 6, _('安全')
-        family = 7, _('家庭')
-        happiness = 8, _('快乐')
-        shunyi = 9, _('万事顺意')
+    # class Wish_choices(models.IntegerChoices):
+    #     career = 1, _('事业')
+    #     study = 2, _('学业')
+    #     wealth = 3, _('财富')
+    #     love = 4, _('爱情')
+    #     health = 5, _('健康')
+    #     safety = 6, _('安全')
+    #     family = 7, _('家庭')
+    #     happiness = 8, _('快乐')
+    #     shunyi = 9, _('万事顺意')
 
     user = models.ForeignKey(verbose_name='用户', to=User, on_delete=models.CASCADE)
     forself = models.BooleanField(verbose_name='为自己测', default=True)
 
     # 基本信息
-    name = models.CharField(verbose_name='姓名', max_length=15, null=True, blank=True)
-    gender = models.IntegerField(verbose_name='性别', choices=Gender_choices.choices, null=True, blank=True)
-    birthdt = models.DateTimeField(verbose_name='出生时间', null=True, blank=True)
-    job = models.CharField(verbose_name='职业', max_length=15, null=True, blank=True)
-    belief = models.IntegerField(verbose_name='信仰', choices=Belief_choices.choices, null=True, blank=True)
-    mood = models.IntegerField(verbose_name='心情', choices=Mood_choices.choices, null=True, blank=True)
+    name = models.CharField(verbose_name='姓名', max_length=15, null=False)
+    gender = models.IntegerField(verbose_name='性别', choices=Gender_choices.choices, null=False)
+    birthdt = models.DateTimeField(verbose_name='出生时间', null=False)
+    birthloc = models.CharField(verbose_name='出生地', max_length=30, null=False)
+    liveloc = models.CharField(verbose_name='现居地', max_length=30, null=False)
+    job = models.CharField(verbose_name='职业', max_length=15, null=False)
+    belief = models.IntegerField(verbose_name='信仰', choices=Belief_choices.choices, null=False)
+    mood = models.IntegerField(verbose_name='心情', choices=Mood_choices.choices, null=False)
 
     # 性格测评
-    question1 = models.IntegerField(verbose_name='问题1', choices=Question_choices_two.choices, null=True, blank=True)
-    question2 = models.IntegerField(verbose_name='问题2', choices=Question_choices_two.choices, null=True, blank=True)
-    question3 = models.IntegerField(verbose_name='问题3', choices=Question_choices_two.choices, null=True, blank=True)
-    question4 = models.IntegerField(verbose_name='问题4', choices=Question_choices_two.choices, null=True, blank=True)
-    wish = models.IntegerField(verbose_name='心愿', choices=Wish_choices.choices, null=True, blank=True)
+    question1 = models.IntegerField(verbose_name='问题1', choices=Question_choices_two.choices, null=False)
+    question2 = models.IntegerField(verbose_name='问题2', choices=Question_choices_two.choices, null=False)
+    question3 = models.IntegerField(verbose_name='问题3', choices=Question_choices_two.choices, null=False)
+    question4 = models.IntegerField(verbose_name='问题4', choices=Question_choices_two.choices, null=False)
+    wish = models.CharField(verbose_name='心愿', max_length=9, null=False)
 
     create_time = models.DateTimeField(verbose_name='创建时间', auto_now_add=True) 
     update_time = models.DateTimeField(verbose_name='修改时间', auto_now=True)
@@ -63,17 +65,15 @@ class Evalcontent(models.Model):
     class Meta:
         verbose_name = "测评内容"
         verbose_name_plural = "测评内容"
+        unique_together = (("user", "name"),)
 
 
+class EvalcontentSerializer(serializers.ModelSerializer):
 
-
-
-
-
-
-
-
-
+    class Meta:
+        model = Evalcontent
+        # fields = '__all__'
+        exclude = ['user']
 
 
 class Chathistory(models.Model):
@@ -81,6 +81,7 @@ class Chathistory(models.Model):
     class Talker_choices(models.IntegerChoices):
         llm = 0, _('大模型')
         user = 1, _('用户')
+        sys = 2, _('sys')
 
     user = models.ForeignKey(verbose_name='用户', to=User, on_delete=models.CASCADE)
     talker = models.IntegerField(verbose_name='说话人', choices=Talker_choices.choices, null=False)
@@ -96,10 +97,11 @@ class Chathistory(models.Model):
         verbose_name_plural = "大模型对话记录"
 
 
-
-
-
-
+class ChathistorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Chathistory
+        # fields = '__all__'
+        fields = ['talker', 'msg', 'create_time']
 
 
 class Evalreport(models.Model):
@@ -123,11 +125,25 @@ class Evalreport(models.Model):
 
 
     def __str__(self) -> str:
-        return self.name
+        return self.evalcontent.name
 
     class Meta:
         verbose_name = "测评报告"
-        verbose_name_plural = "测评内容"
+        verbose_name_plural = "测评报告"
 
 
+class EvalreportSerializer1(serializers.ModelSerializer):
+    report_id = serializers.IntegerField(source='id')
+    name = serializers.CharField(source='evalcontent.name')
+    class Meta:
+        model = Evalreport
+        fields = ['report_id', 'name']
+        # exclude = ['user', 'evalcontent']
 
+class EvalreportSerializer2(serializers.ModelSerializer):
+    evalcontent_id = serializers.IntegerField(source='evalcontent.id')
+    name = serializers.CharField(source='evalcontent.name')
+    class Meta:
+        model = Evalreport
+        # fields = '__all__'
+        exclude = ['user', 'evalcontent']

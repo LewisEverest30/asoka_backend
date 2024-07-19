@@ -42,11 +42,21 @@ class Order(models.Model):
     def __str__(self):
         return self.order_number
 
+    class Meta:
+        verbose_name = "订单"
+        verbose_name_plural = "订单"
+
 
 class Cart(models.Model):
-
+    Type_choices = [
+        ('挚礼', '挚礼'),
+        ('珠', '珠'),
+        ('手链', '手链'),
+    ]
     user = models.ForeignKey(verbose_name='用户', to=User, on_delete=models.CASCADE)
     
+    typ = models.CharField(verbose_name='类别', max_length=20, default='挚礼',
+                           choices=Type_choices, null=False, blank=False)
     gemstone = models.ForeignKey(verbose_name='珠', to=Gemstone, 
                                  null=True, blank=True, on_delete=models.SET_NULL)
     bracelet = models.ForeignKey(verbose_name='链', to=Bracelet, 
@@ -54,62 +64,119 @@ class Cart(models.Model):
     gift = models.ForeignKey(verbose_name='挚礼', to=Gift, 
                                  null=True, blank=True, on_delete=models.SET_NULL)
     
-    component = models.CharField(verbose_name='零件组成', max_length=200, null=False, blank=False,
+    component = models.CharField(verbose_name='组成', max_length=200, null=False, blank=False,
                                  validators=[Items_Validator])
     quantity = models.IntegerField(verbose_name='数量', null=False, blank=False, validators=[MinValueValidator(0)])
     cost = models.DecimalField(verbose_name='金额', null=False, blank=False, 
                                 max_digits=10, decimal_places=2, validators=[MinValueValidator(1)])
-    is_ordered = models.BooleanField(verbose_name='是否下单', null=False, blank=False, default=False)
+
     # 未下单 -- 作为传统意义的购物车项，删除直接删
     # 已下单 -- 作为订单内容
         # 完成订单
-    order = models.ForeignKey(verbose_name='所属订单', to=Order, on_delete=models.CASCADE)
+    is_ordered = models.BooleanField(verbose_name='是否下单', null=False, blank=False, default=False)
+    order = models.ForeignKey(verbose_name='所属订单', to=Order, null=True, on_delete=models.PROTECT)
 
     create_time = models.DateTimeField(verbose_name='创建时间', auto_now_add=True) 
 
     def __str__(self):
-        return f"{self.user.name} - {self.product.name}"
+        return f"{self.user.name} - {self.create_time}"
 
     class Meta:
         verbose_name = "购物车"
         verbose_name_plural = "购物车"
 
 
+class CartSerializer(serializers.ModelSerializer):
+    type = serializers.CharField(source='typ')
+    product_id = serializers.SerializerMethodField()
+    pic = serializers.SerializerMethodField()
+    name = serializers.SerializerMethodField()
+    intro = serializers.SerializerMethodField()
 
-class Coupontype(models.Model):
-    name = models.CharField(verbose_name='名称', max_length=30, null=False)
-    discount = models.CharField(verbose_name='折扣方式', max_length=50, null=False)
-
-    def __str__(self):
-        return self.description + '-' + self.discount
+    def get_product_id(self, obj):
+        if obj.gemstone is not None:
+            return obj.gemstone.id
+        elif obj.bracelet is not None:
+            return obj.bracelet.id
+        elif obj.gift is not None:
+            return obj.gift.id
+        else:
+            return None
     
+    def get_pic(self, obj):
+        if obj.gemstone is not None:
+            return str(obj.gemstone.pic)
+        elif obj.bracelet is not None:
+            return str(obj.bracelet.pic)
+        elif obj.gift is not None:
+            return str(obj.gift.pic)
+        else:
+            return None
+    
+    def get_name(self, obj):
+        if obj.gemstone is not None:
+            return obj.gemstone.name
+        elif obj.bracelet is not None:
+            return obj.bracelet.name
+        elif obj.gift is not None:
+            return obj.gift.name
+        else:
+            return None
+
+    def get_intro(self, obj):
+        if obj.gemstone is not None:
+            return obj.gemstone.intro
+        elif obj.bracelet is not None:
+            return obj.bracelet.intro
+        elif obj.gift is not None:
+            return obj.gift.intro
+        else:
+            return None
+
     class Meta:
-        verbose_name = "优惠券类型"
-        verbose_name_plural = "优惠券类型"
-
-
-class Coupon(models.Model):
-    user = models.ForeignKey(verbose_name='用户', to=User, on_delete=models.CASCADE)
-    coupontype = models.ForeignKey(verbose_name='优惠券类型', to=Coupontype, on_delete=models.CASCADE)
-    ddl = models.DateTimeField(verbose_name='创建时间', null=True) 
-
-    def __str__(self):
-        return self.user.name + '-' + self.coupontype.name
-
-    class Meta:
-        verbose_name = "优惠券拥有情况"
-        verbose_name_plural = "优惠券拥有情况"
+        model = Cart
+        fields = ['id', 'type', 'product_id', 'name', 'pic', 'intro', 'component', 'quantity', 'cost']
+        # fields = ['id', 'type', 'product_id', 'name', 'intro', 'quantity', 'cost']
+        # exclude = ['user', 'evalcontent']
 
 
 
-class Refund(models.Model):
-    class Type_choices(models.IntegerChoices):
-        refund = 0, _('退货退款')
-        change = 1, _('换货')
 
-    order = models.ForeignKey(verbose_name='所属订单', to=Order, on_delete=models.CASCADE)
-    reason = models.TextField(verbose_name='退货理由', null=False, blank=False)
-    typ = models.IntegerField(verbose_name='类别', choices=Type_choices.choices, null=False, blank=False)
-    pic = models.ImageField(verbose_name='图片', null=True, blank=True,
-                            upload_to='refund/')
+
+# class Coupontype(models.Model):
+#     name = models.CharField(verbose_name='名称', max_length=30, null=False)
+#     discount = models.CharField(verbose_name='折扣方式', max_length=50, null=False)
+
+#     def __str__(self):
+#         return self.description + '-' + self.discount
+    
+#     class Meta:
+#         verbose_name = "优惠券类型"
+#         verbose_name_plural = "优惠券类型"
+
+
+# class Coupon(models.Model):
+#     user = models.ForeignKey(verbose_name='用户', to=User, on_delete=models.CASCADE)
+#     coupontype = models.ForeignKey(verbose_name='优惠券类型', to=Coupontype, on_delete=models.CASCADE)
+#     ddl = models.DateTimeField(verbose_name='创建时间', null=True) 
+
+#     def __str__(self):
+#         return self.user.name + '-' + self.coupontype.name
+
+#     class Meta:
+#         verbose_name = "优惠券拥有情况"
+#         verbose_name_plural = "优惠券拥有情况"
+
+
+
+# class Refund(models.Model):
+#     class Type_choices(models.IntegerChoices):
+#         refund = 0, _('退货退款')
+#         change = 1, _('换货')
+
+#     order = models.ForeignKey(verbose_name='所属订单', to=Order, on_delete=models.CASCADE)
+#     reason = models.TextField(verbose_name='退货理由', null=False, blank=False)
+#     typ = models.IntegerField(verbose_name='类别', choices=Type_choices.choices, null=False, blank=False)
+#     pic = models.ImageField(verbose_name='图片', null=True, blank=True,
+#                             upload_to='refund/')
 

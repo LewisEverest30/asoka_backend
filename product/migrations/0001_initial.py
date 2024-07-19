@@ -37,7 +37,7 @@ class Migration(migrations.Migration):
                 ('intro', models.TextField(verbose_name='介绍')),
                 ('price', models.DecimalField(decimal_places=2, max_digits=7, validators=[django.core.validators.MinValueValidator(1)], verbose_name='单价')),
                 ('sales', models.IntegerField(default=0, validators=[django.core.validators.MinValueValidator(0)], verbose_name='销量')),
-                ('component', models.CharField(max_length=200, validators=[django.core.validators.RegexValidator('^(\\d+\\*[^\\|]+\\|)*(\\d+\\*[^\\|]+)$', '请用这样的格式来表示产品的组成: 3*塑料石|2*蓝宝石|1*玉髓手环')], verbose_name='零件组成\n示例: 3*塑料石|2*蓝宝石|1*玉髓手环')),
+                ('component', models.CharField(max_length=200, validators=[django.core.validators.RegexValidator('^(\\d+\\*[^\\|]+\\|)*(\\d+\\*[^\\|]+)$', '请用这样的格式来表示产品的组成: 3*塑料石|2*蓝宝石|1*玉髓手环')], verbose_name='组成\n示例: 3*塑料石|2*蓝宝石|1*玉髓手环')),
             ],
             options={
                 'verbose_name': '成品',

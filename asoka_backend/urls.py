@@ -48,6 +48,18 @@ urlpatterns = [
     path('get_gift_by_type', get_gift_by_type.as_view()),
     path('get_certain_gift', get_certain_gift.as_view()),
 
+    path('create_cart', create_cart.as_view()),
+    path('get_all_cart', get_all_cart.as_view()),
+    path('update_cart_quantity', update_cart_quantity.as_view()),
+    path('delete_cart', delete_cart.as_view()),
+    path('clear_cart', clear_cart.as_view()),
+
+    path('create_address', create_address.as_view()),
+    path('get_all_address', get_all_address.as_view()),
+    path('update_address', update_address.as_view()),
+    path('delete_address', delete_address.as_view()),
+
+    path('create_order_from_cart', create_order_from_cart.as_view()),
 
 ]
 

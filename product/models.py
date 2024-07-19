@@ -31,15 +31,17 @@ class Gemstone(models.Model):
         verbose_name_plural = "珠"
 
 class GemstoneSerializer1(serializers.ModelSerializer):
+    type = serializers.CharField(source='typ')
     class Meta:
         model = Gemstone
-        fields = ['id', 'name', 'typ', 'pic']
+        fields = ['id', 'name', 'type', 'pic']
         # exclude = ['user', 'evalcontent']
 
 class GemstoneSerializer2(serializers.ModelSerializer):
+    type = serializers.CharField(source='typ')
     class Meta:
         model = Gemstone
-        fields = '__all__'
+        exclude = ['typ']
 
 
 # Create your models here.
@@ -73,15 +75,17 @@ class Bracelet(models.Model):
         verbose_name_plural = "手链"
 
 class BraceletSerializer1(serializers.ModelSerializer):
+    type = serializers.CharField(source='typ')
     class Meta:
         model = Bracelet
-        fields = ['id', 'name', 'typ', 'pic']
+        fields = ['id', 'name', 'type', 'pic']
         # exclude = ['user', 'evalcontent']
 
 class BraceletSerializer2(serializers.ModelSerializer):
+    type = serializers.CharField(source='typ')
     class Meta:
         model = Bracelet
-        fields = '__all__'
+        exclude = ['typ']
 
 
 
@@ -117,7 +121,7 @@ class Gift(models.Model):
     price = models.DecimalField(verbose_name='单价', null=False, blank=False, max_digits=7, decimal_places=2,
                                 validators=[MinValueValidator(1)])
     sales = models.IntegerField(verbose_name='销量', default=0, null=False, blank=False, validators=[MinValueValidator(0)])
-    component = models.CharField(verbose_name='零件组成\n示例: 3*塑料石|2*蓝宝石|1*玉髓手环', max_length=200, null=False, blank=False,
+    component = models.CharField(verbose_name='组成\n (示例: 3*塑料石|2*蓝宝石|1*玉髓手环)', max_length=200, null=False, blank=False,
                                  validators=[Items_Validator])
 
     def __str__(self):
@@ -127,12 +131,14 @@ class Gift(models.Model):
         verbose_name_plural = "挚礼"
 
 class GiftSerializer1(serializers.ModelSerializer):
+    type = serializers.CharField(source='typ')
     class Meta:
         model = Gift
-        fields = ['id', 'name', 'typ', 'pic', 'intro', 'price', 'sales']
+        fields = ['id', 'name', 'type', 'pic', 'intro', 'price', 'sales']
         # exclude = ['user', 'evalcontent']
 
 class GiftSerializer2(serializers.ModelSerializer):
+    type = serializers.CharField(source='typ')
     class Meta:
         model = Gift
-        fields = '__all__'
+        exclude = ['typ']

@@ -12,7 +12,8 @@ class Order(models.Model):
         pending_shipment = 2, _('待发货')
         pending_receipt = 3, _('待收货')
         finished = 4, _('已完成')
-        refund = 5, _('退款/售后')
+        refund = 5, _('退款/售后中')
+        refund_fin = 6, _('完成退款/售后')
 
     # STATUS_CHOICES = [
     #     ('cancelled', '已取消'),
@@ -45,6 +46,7 @@ class Order(models.Model):
     class Meta:
         verbose_name = "订单"
         verbose_name_plural = "订单"
+
 
 
 class Cart(models.Model):
@@ -141,6 +143,46 @@ class CartSerializer(serializers.ModelSerializer):
 
 
 
+class OrderSerializer1(serializers.ModelSerializer):
+    status = serializers.SerializerMethodField()
+    items = serializers.SerializerMethodField()
+
+    def get_status(self, obj):
+        sta_choices = ['已取消', '待付款', '待发货', '待收货', '已完成', '退款/售后中', '完成退款/售后']
+        return sta_choices[int(obj.status)]
+    
+    def get_items(self, obj):
+        cart_found = Cart.objects.filter(order_id=obj.id)
+        serializer = CartSerializer(instance=cart_found, many=True)            
+        return list(serializer.data)
+    
+    class Meta:
+        model = Order
+        # fields = '__all__'
+        # fields = ['id', 'type', 'product_id', 'name', 'pic', 'intro', 'component', 'quantity', 'cost']
+        # exclude = ['user', 'evalcontent']
+        fields = ['id', 'order_number', 'total_cost', 'status', 'items']
+
+
+class OrderSerializer2(serializers.ModelSerializer):
+    status = serializers.SerializerMethodField()
+    items = serializers.SerializerMethodField()
+
+    def get_status(self, obj):
+        sta_choices = ['已取消', '待付款', '待发货', '待收货', '已完成', '退款/售后中', '完成退款/售后']
+        return sta_choices[int(obj.status)]
+    
+    def get_items(self, obj):
+        cart_found = Cart.objects.filter(order_id=obj.id)
+        serializer = CartSerializer(instance=cart_found, many=True)            
+        return list(serializer.data)
+    
+    class Meta:
+        model = Order
+        # fields = '__all__'
+        # fields = ['id', 'type', 'product_id', 'name', 'pic', 'intro', 'component', 'quantity', 'cost']
+        exclude = ['user']
+        # fields = ['id', 'order_number', 'total_cost', 'status', 'items']
 
 
 # class Coupontype(models.Model):

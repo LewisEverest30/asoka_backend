@@ -26,6 +26,7 @@ from shop.views  import *
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    
     path('login', login.as_view()),
     path('get_user_info', get_user_info.as_view()),
     path('update_user_info', update_user_info.as_view()),
@@ -59,7 +60,14 @@ urlpatterns = [
     path('update_address', update_address.as_view()),
     path('delete_address', delete_address.as_view()),
 
+    path('get_all_order', get_all_order.as_view()),
+    path('get_certain_order', get_certain_order.as_view()),
     path('create_order_from_cart', create_order_from_cart.as_view()),
+    path('create_order_from_product', create_order_from_product.as_view()),
+    path('set_order_paid', set_order_paid.as_view()),
+    path('cancel_order', cancel_order.as_view()),
+    path('refund_order', refund_order.as_view()),
+
 
 ]
 

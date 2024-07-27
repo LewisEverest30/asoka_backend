@@ -56,7 +56,7 @@ class UserSerializer(serializers.ModelSerializer):
 class Address(models.Model):
     user = models.ForeignKey(verbose_name='用户', to=User, on_delete=models.CASCADE)
     recipient = models.CharField(verbose_name='收货人', max_length=15, null=False, blank=False)
-    phone = models.CharField(verbose_name='手机号', max_length=11, null=False, blank=False)
+    phone = models.CharField(verbose_name='收货人手机号', max_length=11, null=False, blank=False)
     detailed_address = models.TextField(verbose_name='详细地址', null=False, blank=False)
 
     def __str__(self):

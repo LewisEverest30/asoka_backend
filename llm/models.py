@@ -39,7 +39,7 @@ class Evalcontent(models.Model):
     forself = models.BooleanField(verbose_name='为自己测', default=True)
 
     # 基本信息
-    name = models.CharField(verbose_name='姓名', max_length=15, null=False)
+    name = models.CharField(verbose_name='被测人姓名', max_length=15, null=False)
     gender = models.IntegerField(verbose_name='性别', choices=Gender_choices.choices, null=False)
     birthdt = models.DateTimeField(verbose_name='出生时间', null=False)
     birthloc = models.CharField(verbose_name='出生地', max_length=30, null=False)
@@ -60,7 +60,7 @@ class Evalcontent(models.Model):
 
 
     def __str__(self) -> str:
-        return self.name
+        return self.name + ' 的测评内容'
 
     class Meta:
         verbose_name = "测评内容"
@@ -125,7 +125,7 @@ class Evalreport(models.Model):
 
 
     def __str__(self) -> str:
-        return self.evalcontent.name
+        return self.evalcontent.name + ' 的测评报告'
 
     class Meta:
         verbose_name = "测评报告"

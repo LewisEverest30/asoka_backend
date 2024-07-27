@@ -54,11 +54,13 @@ class UserAdmin(admin.ModelAdmin, ExportExcelMixin):
         queryset.update(identity=1)
     cancel_vip.short_description = "批量取消 VIP"
 
-    def has_delete_permission(self, request, obj=None):
-        return False
-    
     def has_add_permission(self, request, obj=None):
         return False
+    def has_delete_permission(self, request, obj=None):
+        return False
+    def has_change_permission(self, request, obj=None):
+        return False
+
 
 
 class AddressAdmin(admin.ModelAdmin, ExportExcelMixin):
@@ -72,7 +74,7 @@ class AddressAdmin(admin.ModelAdmin, ExportExcelMixin):
     list_display_links = ['recipient']
 
     search_fields = ('user', "recipient", "phone")
-    
+
     actions = ['export_as_excel']
 
     def has_delete_permission(self, request, obj=None):

@@ -2,7 +2,6 @@ from django.contrib import admin
 from django.http import HttpResponse
 from django.utils.safestring import mark_safe
 
-from openpyxl import Workbook
 from .models import *
 from user.admin import ExportExcelMixin
 

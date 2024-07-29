@@ -1,5 +1,4 @@
 import json
-import pytz
 import requests
 import datetime
 from django.conf import settings

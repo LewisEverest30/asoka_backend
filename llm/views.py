@@ -1,18 +1,14 @@
 import json
 from django.db import IntegrityError
-import pytz
 import requests
 import datetime
 from django.conf import settings
-from django.http import JsonResponse
-from django.forms.models import model_to_dict
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from .models import *
 from user.auth import MyJWTAuthentication, create_token
 from volcenginesdkarkruntime import Ark
-import asyncio
 
 class save_eval_content(APIView):
     authentication_classes = [MyJWTAuthentication, ]
@@ -124,7 +120,7 @@ class get_eval_content(APIView):
 
 class start_chat(APIView):
     authentication_classes = [MyJWTAuthentication, ]
-    client = Ark(api_key="0b875849-8365-495f-acfa-3837842c4ba0")
+    client = Ark(api_key=settings.VOLCENGINE_API_KEY)
 
     def fetch_non_stream_response(self, messages):
         stream = self.client.chat.completions.create(
@@ -175,7 +171,7 @@ class start_chat(APIView):
 
 class continue_chat(APIView):
     authentication_classes = [MyJWTAuthentication, ]
-    client = Ark(api_key="0b875849-8365-495f-acfa-3837842c4ba0")
+    client = Ark(api_key=settings.VOLCENGINE_API_KEY)
 
     def fetch_non_stream_response(self, messages):
         stream = self.client.chat.completions.create(
@@ -235,19 +231,19 @@ class continue_chat(APIView):
             return Response({'ret': -1, 'errmsg': '请检查提交的数据是否标准', 'llm_msg':None})
 
 
-class save_message(APIView):
-    authentication_classes = [MyJWTAuthentication, ]
-    def post(self,request,*args,**kwargs):
-        userid = request.user['userid']
-        info = json.loads(request.body)
-        try:
-            talker = info['talker']
-            msg = info['msg']
-            Chathistory.objects.create(user_id=userid, talker=talker, msg=msg)
-            return Response({'ret': 0, 'errmsg': None})
-        except Exception as e:
-            print(repr(e))
-            return Response({'ret': -1, 'errmsg': '请检查提交的数据是否标准'})
+# class save_message(APIView):
+#     authentication_classes = [MyJWTAuthentication, ]
+#     def post(self,request,*args,**kwargs):
+#         userid = request.user['userid']
+#         info = json.loads(request.body)
+#         try:
+#             talker = info['talker']
+#             msg = info['msg']
+#             Chathistory.objects.create(user_id=userid, talker=talker, msg=msg)
+#             return Response({'ret': 0, 'errmsg': None})
+#         except Exception as e:
+#             print(repr(e))
+#             return Response({'ret': -1, 'errmsg': '请检查提交的数据是否标准'})
 
 
 class get_chat_history(APIView):
@@ -278,8 +274,21 @@ class clear_chat_history(APIView):
 
 
 
-class save_eval_report(APIView):
+class generate_eval_report(APIView):
     authentication_classes = [MyJWTAuthentication, ]
+    client = Ark(api_key=settings.VOLCENGINE_API_KEY)
+
+    def fetch_non_stream_response(self, messages):
+        stream = self.client.chat.completions.create(
+            model="ep-20240726181421-rfxtl",
+            messages=messages,
+            stream=False
+        )
+        return {
+            "role": "assistant",
+            "content": stream.choices[0].message.content
+        }
+
     def post(self,request,*args,**kwargs):
         userid = request.user['userid']
         info = json.loads(request.body)
@@ -288,25 +297,65 @@ class save_eval_report(APIView):
             # 先检查对应的测评内容是否记录下来了
             content_found = Evalcontent.objects.filter(user_id=userid, name=name)
             if content_found.count() == 0:
-                return Response({'ret': 3, 'errmsg':'对应的的测评内容未被记录'})
+                return Response({'ret': 3, 'errmsg':'对应的的测评内容未被记录', 'data':None})
+
+            # 获取测评内容
+            try:
+                bazi_dic = json.loads(content_found[0].bazi.replace("'", '"'))
+            except Exception as e:
+                print(repr(e))
+                print(content_found[0].bazi)
+                return Response({'ret': 5, 'errmsg': '八字信息存在格式问题', 'data':None})
             
-            title = info['title']
-            overall = info['overall']
-            wish = info['wish']
-            advice = info['advice']
+            wish_list = ['事业', '学业', '财富', '爱情', '健康', '安全', '家庭', '快乐', '万事顺意']
+            wish = ''
+            for i, char in enumerate(content_found[0].wish):
+                if int(char) == 1:
+                    wish += wish_list[i]
+                    wish += ' '
+            eval_dict = {
+                "姓名": content_found[0].name,
+                "生日": f"{content_found[0].birthdt.year}年{content_found[0].birthdt.month}月{content_found[0].birthdt.day}日{content_found[0].birthdt.hour}时{content_found[0].birthdt.minute}分",
+                "八字": bazi_dic["八字"],
+                "性别": bazi_dic["性别"],
+                "纳音": bazi_dic["纳音"],
+                "愿望": wish,
+            }
+            print(eval_dict)
+
+            # 将八字信息作为第一条发给gpt
+            new_msgs = [{"role": "system", "content": settings.EVALREPORT_PROMPT}, ]
+            new_msgs.append({"role": "user", "content": str(eval_dict)})
+            
+            try:
+                # print('对话大模型中')
+                llm_result = self.fetch_non_stream_response(new_msgs)
+                # print(llm_result)
+            except Exception as e:
+                print(repr(e))
+                return Response({'ret': 7, 'errmsg': '大模型故障', 'data':None})
+
+
+            parts = llm_result['content'].split('###')[1:]
+            report_parts = []
+            for s in parts:
+                report_parts.append(s.strip())
 
             report_found = Evalreport.objects.filter(user_id=userid, evalcontent__name=name)
             # 已存在则更新，不存在则创建
             if report_found.count() == 0:  # 尝试创建一条数据
                 newc_report = Evalreport.objects.create(user_id=userid, evalcontent=content_found[0],
-                                                        title=title, overall=overall, wish=wish, advice=advice)
+                                                        title=report_parts[1], overall=report_parts[2], 
+                                                        wish=report_parts[3], advice=report_parts[4])
+                serializer = EvalreportSerializer2(instance=newc_report, many=False)
             else:  # 已有该数据, 更新
-                report_found.update(title=title, overall=overall, wish=wish, advice=advice)
+                report_found.update(title=report_parts[1], overall=report_parts[2], 
+                                    wish=report_parts[3], advice=report_parts[4])
+                serializer = EvalreportSerializer2(instance=report_found[0], many=False)
+            return Response({'ret': 0, 'errmsg':None, 'data':serializer.data})
         except Exception as e:
             print(repr(e))
-            return Response({'ret': -1, 'errmsg':'请检查提交的数据是否标准'})   
-                
-        return Response({'ret': 0, 'errmsg':None})
+            return Response({'ret': -1, 'errmsg':'请检查提交的数据是否标准', 'data':None})   
 
 
 class get_all_eval_report(APIView):

@@ -1,5 +1,4 @@
 from django.contrib import admin
-from django.http import HttpResponse
 from django.utils.safestring import mark_safe
 
 from .models import *
@@ -20,6 +19,23 @@ class EvalcontentAdmin(admin.ModelAdmin, ExportExcelMixin):
     search_fields = ("user__name", 'name')
     
     actions = ['export_as_excel']
+
+    def get_readonly_fields(self, request, obj=None):
+        readonly_fields = super().get_readonly_fields(request, obj)
+        if obj:
+            return readonly_fields + ('processed_wish',)
+        return readonly_fields
+
+    def processed_wish(self, obj):
+        wish_list = ['事业', '学业', '财富', '爱情', '健康', '安全', '家庭', '快乐', '万事顺意']
+        wish = ''
+        for i, char in enumerate(obj.wish):
+            if int(char) == 1:
+                wish += wish_list[i]
+                wish += ' '
+        return wish
+    processed_wish.short_description = '心愿（转码后）'
+
 
     def has_add_permission(self, request, obj=None):
         return False

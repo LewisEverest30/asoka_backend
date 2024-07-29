@@ -1,10 +1,7 @@
 import json
-import pytz
 import requests
 import datetime
 from django.conf import settings
-from django.http import JsonResponse
-from django.forms.models import model_to_dict
 from rest_framework.response import Response
 from rest_framework.views import APIView
 

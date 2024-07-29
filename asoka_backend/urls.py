@@ -34,12 +34,12 @@ urlpatterns = [
    
     path('save_eval_content', save_eval_content.as_view()),
     path('get_eval_content', get_eval_content.as_view()),
-    path('save_message', save_message.as_view()),
+    # path('save_message', save_message.as_view()),
     path('get_chat_history', get_chat_history.as_view()),
     path('start_chat', start_chat.as_view()),
-        path('continue_chat', continue_chat.as_view()),
+    path('continue_chat', continue_chat.as_view()),
     path('clear_chat_history', clear_chat_history.as_view()),
-    path('save_eval_report', save_eval_report.as_view()),
+    path('generate_eval_report', generate_eval_report.as_view()),
     path('get_all_eval_report', get_all_eval_report.as_view()),
     path('get_certain_eval_report', get_certain_eval_report.as_view()),
 

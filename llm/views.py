@@ -1,4 +1,5 @@
 import json
+from django.db import IntegrityError
 import pytz
 import requests
 import datetime
@@ -10,8 +11,8 @@ from rest_framework.views import APIView
 
 from .models import *
 from user.auth import MyJWTAuthentication, create_token
-
-
+from volcenginesdkarkruntime import Ark
+import asyncio
 
 class save_eval_content(APIView):
     authentication_classes = [MyJWTAuthentication, ]
@@ -33,20 +34,65 @@ class save_eval_content(APIView):
             question3 = info['question3']
             question4 = info['question4']
             wish = info['wish']
+
+            # 获取八字信息
+            try:
+                bdt = datetime.datetime.fromisoformat(birthdt)
+                bazi_post_data = {
+                    "year": bdt.year,
+                    "month": bdt.month,
+                    "day": bdt.day,
+                    "hour": bdt.hour,
+                    "minute": bdt.minute,
+                    "sex": gender
+                }
+                print(bazi_post_data)
+                bazi_response = requests.post('http://localhost:5007/bazi', data=json.dumps(bazi_post_data),
+                                              headers={'Content-Type': 'application/json'})  # 向腾讯服务器发送登录请求
+                bazi_json = bazi_response.json()
+                bazi_part = {
+                    "八字": bazi_json["八字"],
+                    "性别": bazi_json["性别"],
+                    "纳音": bazi_json["纳音"],
+                }
+                bazi_str = str(bazi_part)
+                print('bazi '+bazi_str)
+            except Exception as e:
+                print(repr(e))
+                return Response({'ret': 7, 'errmsg': '获取八字失败'})   
             
-            content_found = Evalcontent.objects.filter(user_id=userid, name=name)
-            # 已存在则更新，不存在则创建
-            if content_found.count() == 0:  # 尝试创建一条数据
-                newc_content = Evalcontent.objects.create(user_id=userid, forself=forself, name=name, gender=gender,
-                                                        birthdt=birthdt, birthloc=birthloc, liveloc=liveloc,
-                                                        job=job, belief=belief, mood=mood, question1=question1,
-                                                        question2=question2, question3=question3,
-                                                        question4=question4, wish=wish)
-            else:  # 已有该数据, 更新
-                content_found.update(name=name, forself=forself, gender=gender, birthdt=birthdt, birthloc=birthloc,
-                                                        liveloc=liveloc, job=job, belief=belief, mood=mood, question1=question1,
-                                                        question2=question2, question3=question3,
-                                                        question4=question4, wish=wish)
+
+            if forself == True:
+                forself_found = Evalcontent.objects.filter(user_id=userid, forself=True)
+                print(forself_found.count())
+                if forself_found.count() == 0:
+                    newc_content = Evalcontent.objects.create(user_id=userid, forself=forself, name=name, gender=gender,
+                                                            birthdt=birthdt, birthloc=birthloc, liveloc=liveloc,
+                                                            job=job, belief=belief, mood=mood, question1=question1,
+                                                            question2=question2, question3=question3,
+                                                            question4=question4, wish=wish, bazi=bazi_str)
+     
+                else:
+                    forself_found.update(name=name, gender=gender, birthdt=birthdt, birthloc=birthloc,
+                                                            liveloc=liveloc, job=job, belief=belief, mood=mood, question1=question1,
+                                                            question2=question2, question3=question3,
+                                                            question4=question4, wish=wish, bazi=bazi_str)
+            else:
+                content_found = Evalcontent.objects.filter(user_id=userid, name=name, forself=False)
+                # 已存在则更新，不存在则创建
+                if content_found.count() == 0:  # 尝试创建一条数据
+                    newc_content = Evalcontent.objects.create(user_id=userid, forself=forself, name=name, gender=gender,
+                                                            birthdt=birthdt, birthloc=birthloc, liveloc=liveloc,
+                                                            job=job, belief=belief, mood=mood, question1=question1,
+                                                            question2=question2, question3=question3,
+                                                            question4=question4, wish=wish, bazi=bazi_str)
+                else:  # 已有该数据, 更新
+                    content_found.update(name=name, gender=gender, birthdt=birthdt, birthloc=birthloc,
+                                                            liveloc=liveloc, job=job, belief=belief, mood=mood, question1=question1,
+                                                            question2=question2, question3=question3,
+                                                            question4=question4, wish=wish, bazi=bazi_str)
+        except IntegrityError as e:
+            return Response({'ret': 5, 'errmsg': '同一个用户涉及的测评中出现重名'})   
         except Exception as e:
             print(repr(e))
             return Response({'ret': -1, 'errmsg': '请检查提交的数据是否标准'})   
@@ -74,6 +120,119 @@ class get_eval_content(APIView):
         serializer = EvalcontentSerializer(instance=content, many=False)
         return Response({'ret': 0, 'data': serializer.data})
 
+
+
+class start_chat(APIView):
+    authentication_classes = [MyJWTAuthentication, ]
+    client = Ark(api_key="0b875849-8365-495f-acfa-3837842c4ba0")
+
+    def fetch_non_stream_response(self, messages):
+        stream = self.client.chat.completions.create(
+            model="ep-20240726181421-rfxtl",
+            messages=messages,
+            stream=False
+        )
+        return {
+            "role": "assistant",
+            "content": stream.choices[0].message.content
+        }
+
+    def get(self,request,*args,**kwargs):
+        userid = request.user['userid']
+        try:
+
+            chathis_found = Chathistory.objects.filter(user_id=userid).order_by('create_time')
+            
+            # 没有历史记录可开始
+            if chathis_found.count() == 0:
+                new_msgs = [{"role": "system", "content": settings.CHAT_PROMPT}, ]
+                # 获取测评内容
+                try:
+                    evalcont_found = Evalcontent.objects.get(user_id=userid, forself=True)
+                except Exception as e:
+                    print(repr(e))
+                    return Response({'ret': 5, 'errmsg': '该用户尚未对自己做测评', 'llm_msg':None})
+                
+                # 将八字信息作为第一条发给gpt
+                new_msgs.append({"role": "user", "content": settings.CHAT_FIRST_MSG.format(evalcont_found.bazi)})
+                
+                try:
+                    # print('对话大模型中')
+                    llm_result = self.fetch_non_stream_response(new_msgs)
+                    print(llm_result)
+                except Exception as e:
+                    return Response({'ret': 7, 'errmsg': '大模型故障', 'llm_msg':None})
+                
+                Chathistory.objects.create(user_id=userid, talker=0, msg=llm_result['content'])
+                return Response({'ret': 0, 'errmsg': None, 'llm_msg':llm_result['content']})
+            # 有历史记录不可开始
+            else:
+                return Response({'ret': 3, 'errmsg': '已存在聊天历史记录，请继续聊天或清空历史记录再开始新的聊天', 'llm_msg':None})
+        except Exception as e:
+            print(repr(e))
+            return Response({'ret': -1, 'errmsg': '请检查提交的数据是否标准', 'llm_msg':None})
+
+
+class continue_chat(APIView):
+    authentication_classes = [MyJWTAuthentication, ]
+    client = Ark(api_key="0b875849-8365-495f-acfa-3837842c4ba0")
+
+    def fetch_non_stream_response(self, messages):
+        stream = self.client.chat.completions.create(
+            model="ep-20240726181421-rfxtl",
+            messages=messages,
+            stream=False
+        )
+        return {
+            "role": "assistant",
+            "content": stream.choices[0].message.content
+        }
+    
+    def post(self,request,*args,**kwargs):
+        userid = request.user['userid']
+        info = json.loads(request.body)
+        try:
+            msg = info['msg']
+            new_msgs = [{"role": "system", "content": settings.CHAT_PROMPT}, ]
+
+            chathis_found = Chathistory.objects.filter(user_id=userid).order_by('create_time')
+            # 无历史，需开启新聊天
+            if chathis_found.count() == 0:
+                return Response({'ret': 3, 'errmsg': '无历史聊天记录，请开始一个聊天', 'llm_msg':None})
+            # 有历史，可继续聊天
+            else:
+                # 把这次用户说的存下来，注意不在chathis_found中
+                Chathistory.objects.create(user_id=userid, talker=1, msg=msg)
+
+                # 将八字信息作为第一条user消息（不在数据库中，但是实际的第一条消息）
+                try:
+                    evalcont_found = Evalcontent.objects.get(user_id=userid, forself=True)
+                except Exception as e:
+                    print(repr(e))
+                    return Response({'ret': 5, 'errmsg': '该用户尚未对自己做测评', 'llm_msg':None})
+                new_msgs.append({"role": "user", "content": settings.CHAT_FIRST_MSG.format(evalcont_found.bazi)})
+
+                # 从库中载入后续消息
+                for his in chathis_found:
+                    role = 'assistant' if his.talker==0 else 'user'
+                    new_msgs.append({'role':role, 'content':his.msg})
+
+                # 添加当前这条消息
+                new_msgs.append({'role':'user', 'content':msg})
+                
+                # 与llm对话
+                try:
+                    # print('对话大模型中')
+                    llm_result = self.fetch_non_stream_response(new_msgs)
+                    print(llm_result)
+                except Exception as e:
+                    return Response({'ret': 7, 'errmsg': '大模型故障', 'llm_msg':None})
+                
+                Chathistory.objects.create(user_id=userid, talker=0, msg=llm_result['content'])
+                return Response({'ret': 0, 'errmsg': None, 'llm_msg':llm_result['content']})
+        except Exception as e:
+            print(repr(e))
+            return Response({'ret': -1, 'errmsg': '请检查提交的数据是否标准', 'llm_msg':None})
 
 
 class save_message(APIView):

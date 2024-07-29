@@ -17,7 +17,7 @@ class CartAdmin(admin.ModelAdmin, ExportExcelMixin):
     list_display_links = ['id',]
 
     list_filter = ('typ', 'is_ordered')
-    search_fields = ("user",)
+    search_fields = ("user__name",)
     
     actions = ['export_as_excel']
 
@@ -53,7 +53,7 @@ class OrderAdmin(admin.ModelAdmin, ExportExcelMixin):
     list_display_links = ['order_number',]
 
     list_filter = ('status',)
-    search_fields = ("user", 'order_number',)
+    search_fields = ("user__name", 'order_number',)
     
     actions = ['export_as_excel']
 

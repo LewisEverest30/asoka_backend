@@ -55,6 +55,7 @@ class Evalcontent(models.Model):
     question4 = models.IntegerField(verbose_name='问题4', choices=Question_choices_two.choices, null=False)
     wish = models.CharField(verbose_name='心愿', max_length=9, null=False)
 
+    bazi = models.CharField(verbose_name='八字', max_length=200, null=False)
     create_time = models.DateTimeField(verbose_name='创建时间', auto_now_add=True) 
     update_time = models.DateTimeField(verbose_name='修改时间', auto_now=True)
 
@@ -81,7 +82,6 @@ class Chathistory(models.Model):
     class Talker_choices(models.IntegerChoices):
         llm = 0, _('大模型')
         user = 1, _('用户')
-        sys = 2, _('sys')
 
     user = models.ForeignKey(verbose_name='用户', to=User, on_delete=models.CASCADE)
     talker = models.IntegerField(verbose_name='说话人', choices=Talker_choices.choices, null=False)

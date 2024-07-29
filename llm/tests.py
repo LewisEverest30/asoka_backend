@@ -1,23 +1,29 @@
 
-# import json
-# from volcenginesdkarkruntime import AsyncArk
+import asyncio
+import json
+from volcenginesdkarkruntime import AsyncArk
 
-# client = AsyncArk(api_key="0b875849-8365-495f-acfa-3837842c4ba0")
+client = AsyncArk(api_key="0b875849-8365-495f-acfa-3837842c4ba0")
 
-# async def fetch_non_stream_response(messages):
-#     stream = await client.chat.completions.create(
-#         model="ep-20240726181421-rfxtl",
-#         messages=messages,
-#         stream=False
-#     )
-#     async for completion in stream:
-#         print(completion.choices[0].delta.content, end="")
-#         return {
-#             "role": "assistant",
-#             "content": completion.choices[0].delta.content
-#         }
+async def fetch_non_stream_response(messages):
+    stream = await client.chat.completions.create(
+        model="ep-20240726181421-rfxtl",
+        messages=messages,
+        stream=False
+    )
+    async for completion in stream:
+        print(completion.choices[0].delta.content, end="")
+        return {
+            "role": "assistant",
+            "content": completion.choices[0].delta.content
+        }
 
+new_msgs = [{"role": "user", "content": '告诉我你是谁'}, ]
 
+try:
+    result = asyncio.run(fetch_non_stream_response(new_msgs))
+except Exception as e:
+    print(repr(e))
 
 # while True:
 #         user_input = input("You: ")

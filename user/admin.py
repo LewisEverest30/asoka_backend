@@ -73,7 +73,7 @@ class AddressAdmin(admin.ModelAdmin, ExportExcelMixin):
 
     list_display_links = ['recipient']
 
-    search_fields = ('user', "recipient", "phone")
+    search_fields = ('user__name', "recipient", "phone")
 
     actions = ['export_as_excel']
 

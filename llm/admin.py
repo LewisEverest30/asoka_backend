@@ -17,7 +17,7 @@ class EvalcontentAdmin(admin.ModelAdmin, ExportExcelMixin):
     list_display_links = ['name',]
 
     list_filter = ('forself', )
-    search_fields = ("user", 'name')
+    search_fields = ("user__name", 'name')
     
     actions = ['export_as_excel']
 
@@ -26,7 +26,7 @@ class EvalcontentAdmin(admin.ModelAdmin, ExportExcelMixin):
     def has_delete_permission(self, request, obj=None):
         return False
     def has_change_permission(self, request, obj=None):
-        return False
+        return True
 
 
 class EvalcontentInline(admin.TabularInline):
@@ -49,7 +49,7 @@ class EvalreportAdmin(admin.ModelAdmin, ExportExcelMixin):
 
     list_display_links = ['name',]
 
-    search_fields = ("user", 'name')
+    search_fields = ("user__name", 'name')
     
     actions = ['export_as_excel']
 
@@ -77,7 +77,7 @@ class ChathistoryAdmin(admin.ModelAdmin, ExportExcelMixin):
     list_display_links = ['id',]
 
     list_filter = ('talker', )
-    search_fields = ("user", )
+    search_fields = ("user__name", )
     
     actions = ['export_as_excel']
 

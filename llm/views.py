@@ -10,6 +10,8 @@ from .models import *
 from user.auth import MyJWTAuthentication, create_token
 from volcenginesdkarkruntime import Ark
 
+from bazi.lunar import Lunar
+
 class save_eval_content(APIView):
     authentication_classes = [MyJWTAuthentication, ]
     def post(self,request,*args,**kwargs):
@@ -33,23 +35,13 @@ class save_eval_content(APIView):
 
             # 获取八字信息
             try:
+                
                 bdt = datetime.datetime.fromisoformat(birthdt)
-                bazi_post_data = {
-                    "year": bdt.year,
-                    "month": bdt.month,
-                    "day": bdt.day,
-                    "hour": bdt.hour,
-                    "minute": bdt.minute,
-                    "sex": gender
-                }
-                print(bazi_post_data)
-                bazi_response = requests.post('http://localhost:5007/bazi', data=json.dumps(bazi_post_data),
-                                              headers={'Content-Type': 'application/json'})  # 向腾讯服务器发送登录请求
-                bazi_json = bazi_response.json()
+                eightchar = Lunar(bdt)
                 bazi_part = {
-                    "八字": bazi_json["八字"],
-                    "性别": bazi_json["性别"],
-                    "纳音": bazi_json["纳音"],
+                    '八字': ' '.join([eightchar.year8Char, eightchar.month8Char, eightchar.day8Char, eightchar.twohour8Char]),
+                    '性别': '男' if gender==0 else '女',
+                    '纳音': eightchar.get_nayin(),
                 }
                 bazi_str = str(bazi_part)
                 print('bazi '+bazi_str)

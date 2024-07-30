@@ -64,7 +64,8 @@ class save_eval_content(APIView):
                     forself_found.update(name=name, gender=gender, birthdt=birthdt, birthloc=birthloc,
                                                             liveloc=liveloc, job=job, belief=belief, mood=mood, question1=question1,
                                                             question2=question2, question3=question3,
-                                                            question4=question4, wish=wish, bazi=bazi_str)
+                                                            question4=question4, wish=wish, bazi=bazi_str,
+                                                            update_time=datetime.datetime.now())
             else:
                 content_found = Evalcontent.objects.filter(user_id=userid, name=name, forself=False)
                 # 已存在则更新，不存在则创建
@@ -78,7 +79,8 @@ class save_eval_content(APIView):
                     content_found.update(name=name, gender=gender, birthdt=birthdt, birthloc=birthloc,
                                                             liveloc=liveloc, job=job, belief=belief, mood=mood, question1=question1,
                                                             question2=question2, question3=question3,
-                                                            question4=question4, wish=wish, bazi=bazi_str)
+                                                            question4=question4, wish=wish, bazi=bazi_str,
+                                                            update_time=datetime.datetime.now())
         except IntegrityError as e:
             return Response({'ret': 5, 'errmsg': '同一个用户涉及的测评中出现重名'})   
         except Exception as e:
@@ -89,7 +91,7 @@ class save_eval_content(APIView):
         if forself==True:
             User.objects.filter(id=userid).update(name=name, gender=gender, birthdt=birthdt,
                                                 birthloc=birthloc, liveloc=liveloc,
-                                                job=job, belief=belief)
+                                                job=job, belief=belief, update_time=datetime.datetime.now())
                 
         return Response({'ret': 0, 'errmsg': None})
 
@@ -342,7 +344,8 @@ class generate_eval_report(APIView):
                 serializer = EvalreportSerializer2(instance=newc_report, many=False)
             else:  # 已有该数据, 更新
                 report_found.update(title=report_parts[1], overall=report_parts[2], 
-                                    wish=report_parts[3], advice=report_parts[4])
+                                    wish=report_parts[3], advice=report_parts[4],
+                                    update_time=datetime.datetime.now())
                 serializer = EvalreportSerializer2(instance=report_found[0], many=False)
             return Response({'ret': 0, 'errmsg':None, 'data':serializer.data})
         except Exception as e:

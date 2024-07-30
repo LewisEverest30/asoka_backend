@@ -1,5 +1,6 @@
 from django.contrib import admin
 from django.http import HttpResponse
+import datetime
 
 from openpyxl import Workbook
 from .models import *
@@ -47,11 +48,11 @@ class UserAdmin(admin.ModelAdmin, ExportExcelMixin):
     actions = ['export_as_excel', 'make_vip', 'cancel_vip']
 
     def make_vip(modeladmin, request, queryset):
-        queryset.update(identity=1)
+        queryset.update(identity=1, update_time=datetime.datetime.now())
     make_vip.short_description = "批量设置 VIP"
 
     def cancel_vip(modeladmin, request, queryset):
-        queryset.update(identity=1)
+        queryset.update(identity=1, update_time=datetime.datetime.now())
     cancel_vip.short_description = "批量取消 VIP"
 
     def has_add_permission(self, request, obj=None):

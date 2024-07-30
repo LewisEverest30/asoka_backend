@@ -71,7 +71,8 @@ class update_user_info(APIView):
 
             user = User.objects.filter(id=userid).update(name=name, gender=gender, birthdt=birthdt,
                                                          birthloc=birthloc, liveloc=liveloc,
-                                                         job=job, belief=belief, mbti=mbti)
+                                                         job=job, belief=belief, mbti=mbti,
+                                                         update_time=datetime.datetime.now())
             
             return Response({'ret': 0, 'errmsg': None})   
         except Exception as e:

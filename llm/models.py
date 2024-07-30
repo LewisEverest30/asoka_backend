@@ -85,7 +85,7 @@ class Chathistory(models.Model):
 
     user = models.ForeignKey(verbose_name='用户', to=User, on_delete=models.CASCADE)
     talker = models.IntegerField(verbose_name='说话人', choices=Talker_choices.choices, null=False)
-    msg = models.CharField(verbose_name='信息', max_length=300, null=False)
+    msg = models.CharField(verbose_name='信息', max_length=3000, null=False)
     create_time = models.DateTimeField(verbose_name='创建时间', auto_now_add=True) 
 
 
@@ -115,10 +115,10 @@ class Evalreport(models.Model):
     evalcontent = models.OneToOneField(verbose_name='测评内容', to=Evalcontent, on_delete=models.PROTECT)
 
     # 报告内容
-    title = models.CharField(verbose_name='标题', max_length=20, null=False)
-    overall = models.CharField(verbose_name='整体解读', max_length=400, null=False)
-    wish = models.CharField(verbose_name='心愿', max_length=400, null=False)
-    advice = models.CharField(verbose_name='建议', max_length=200, null=False)
+    title = models.CharField(verbose_name='标题', max_length=50, null=False)
+    overall = models.CharField(verbose_name='整体解读', max_length=2000, null=False)
+    wish = models.CharField(verbose_name='心愿', max_length=1000, null=False)
+    advice = models.CharField(verbose_name='建议', max_length=1000, null=False)
 
     create_time = models.DateTimeField(verbose_name='创建时间', auto_now_add=True) 
     update_time = models.DateTimeField(verbose_name='修改时间', auto_now=True)

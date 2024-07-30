@@ -44,7 +44,7 @@ class save_eval_content(APIView):
                     '纳音': eightchar.get_nayin(),
                 }
                 bazi_str = str(bazi_part)
-                print('bazi '+bazi_str)
+                # print('bazi '+bazi_str)
             except Exception as e:
                 print(repr(e))
                 return Response({'ret': 7, 'errmsg': '获取八字失败'})   
@@ -52,7 +52,6 @@ class save_eval_content(APIView):
 
             if forself == True:
                 forself_found = Evalcontent.objects.filter(user_id=userid, forself=True)
-                print(forself_found.count())
                 if forself_found.count() == 0:
                     newc_content = Evalcontent.objects.create(user_id=userid, forself=forself, name=name, gender=gender,
                                                             birthdt=birthdt, birthloc=birthloc, liveloc=liveloc,

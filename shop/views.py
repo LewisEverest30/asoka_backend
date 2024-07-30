@@ -233,7 +233,7 @@ class create_order_from_cart(APIView):
                 for cid in idlist:
                     found = Cart.objects.get(user_id=userid, id=cid)
                     if found.is_ordered==True:
-                        print('该购物车项已经下单，不要重复下单')
+                        # print('该购物车项已经下单，不要重复下单')
                         new.delete()  # 发生异常要删除刚才创建的订单
                         return Response({'ret': 5, 'errmsg':'该购物车项已经下单', 'id':None, 'order_number':None})
             except Exception as e:

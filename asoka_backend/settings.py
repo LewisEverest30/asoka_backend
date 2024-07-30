@@ -24,7 +24,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-e=xfoqd4*b)5&7d$dgxl(m!@7f_^ycen)tms8v49r5j6ci!l*i'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = ['*', 'localhost', '127.0.0.1']
 
@@ -83,8 +83,13 @@ WSGI_APPLICATION = 'asoka_backend.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'asokatest',   # 数据库名
+        'USER': 'wsb',    # 数据库 用户名
+        'PASSWORD': 'wang13261910095',# 数据库 用户密码
+        'HOST': '127.0.0.1', # 数据库服务主机名
+        'PORT': '3306',      # 数据库服务端口    }
+
     }
 }
 
@@ -124,14 +129,14 @@ USE_TZ = False
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
 STATIC_URL = 'static/'
+MEDIA_URL = 'static/media/'  # 图片url的前缀，必须以static开头才能被nginx正确路由，实际url为host+/+media_url+图片位置
+MEDIA_ROOT = '/root/asoka_backend_static/static/media'  # 图片实际位置，与nginx的静态路径对应
+STATIC_ROOT = '/root/asoka_backend_static/static'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
-MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, MEDIA_URL)
 
 APPID ='wx2b4fa660ea71d1a5'
 APPSECRET = 'c9811b45b61ecab06bf595101741eb0c'

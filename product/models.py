@@ -3,7 +3,7 @@ from django.core.validators import MinValueValidator, RegexValidator
 from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
 
-items_pattern = r'^(\d+\*[^\|]+\|)*(\d+\*[^\|]+)$'
+items_pattern = r'^(\d+\*[^\|\*]+\|)*(\d+\*[^\|\*]+)$'
 Items_Validator = RegexValidator(items_pattern, '请用这样的格式来表示产品的组成: 3*塑料石|2*蓝宝石|1*玉髓手环')
 
 # Create your models here.
@@ -35,16 +35,16 @@ class Gemstone(models.Model):
                            choices=Type_choices, null=False, blank=False)
     
     symbol = models.CharField(verbose_name='寓意', max_length=20, 
-                           choices=Symbol_choices, null=False, blank=False)
+                           choices=Symbol_choices, null=True, blank=False)
     
     material = models.CharField(verbose_name='材料', max_length=50, 
                         #    choices=Mat_choices, 
-                           null=False, blank=False)
+                           null=True, blank=False)
     
-    cover = models.ImageField(verbose_name='封面图片（其他图片在下方关联模型里添加）', null=False, blank=False,
+    cover = models.ImageField(verbose_name='封面图片（其他图片在下方产品摄影里添加）', null=True, blank=False,
                             upload_to='gemstone/')
     
-    detail = models.ImageField(verbose_name='详细介绍（长图）', null=False, blank=False,
+    detail = models.ImageField(verbose_name='详细介绍（长图）', null=True, blank=False,
                             upload_to='gemstone/')
     
     loc = models.CharField(verbose_name='产地', max_length=50, null=False, blank=False)
@@ -63,10 +63,15 @@ class GemstonePic(models.Model):
                                  null=False, blank=False, on_delete=models.CASCADE)
     pic = models.ImageField(verbose_name='图片', null=False, blank=False,
                             upload_to='gemstonepic/')
+    class Meta:
+        verbose_name = "珠的产品摄影"
+        verbose_name_plural = "珠的产品摄影"
+
 
 class GemstonePicSerializer(serializers.ModelSerializer):
     class Meta:
         model = GemstonePic
+        exclude = ['id', 'gemstone']
 
 class GemstoneSerializer1(serializers.ModelSerializer):
     type = serializers.CharField(source='typ')
@@ -123,16 +128,16 @@ class Bracelet(models.Model):
                            choices=Type_choices, null=False, blank=False)
     
     symbol = models.CharField(verbose_name='寓意', max_length=20, 
-                           choices=Symbol_choices, null=False, blank=False)
+                           choices=Symbol_choices, null=True, blank=False)
     
     material = models.CharField(verbose_name='材料', max_length=50, 
                         #    choices=Mat_choices, 
-                           null=False, blank=False)
+                           null=True, blank=False)
     
-    cover = models.ImageField(verbose_name='封面图片（其他图片在下方关联模型里添加）', null=False, blank=False,
+    cover = models.ImageField(verbose_name='封面图片（其他图片在下方产品摄影里添加）', null=True, blank=False,
                             upload_to='bracelet/')
     
-    detail = models.ImageField(verbose_name='详细介绍（长图）', null=False, blank=False,
+    detail = models.ImageField(verbose_name='详细介绍（长图）', null=True, blank=False,
                             upload_to='bracelet/')
     
     loc = models.CharField(verbose_name='产地', max_length=50, null=False, blank=False)
@@ -151,11 +156,14 @@ class BraceletPic(models.Model):
                                  null=False, blank=False, on_delete=models.CASCADE)
     pic = models.ImageField(verbose_name='图片', null=False, blank=False,
                             upload_to='braceletpic/')
+    class Meta:
+        verbose_name = "手链的产品摄影"
+        verbose_name_plural = "手链的产品摄影"
 
 class BraceletPicSerializer(serializers.ModelSerializer):
     class Meta:
         model = BraceletPic
-
+        exclude = ['id', 'bracelet']
 
 class BraceletSerializer1(serializers.ModelSerializer):
     type = serializers.CharField(source='typ')
@@ -207,11 +215,11 @@ class Gift(models.Model):
     typ = models.CharField(verbose_name='寓意', max_length=20, 
                            choices=Type_choices, null=False, blank=False)
 
-    cover = models.ImageField(verbose_name='封面图片（其他图片在下方关联模型里添加）', null=False, blank=False,
+    cover = models.ImageField(verbose_name='封面图片（其他图片在下方产品摄影里添加）', null=True, blank=False,
                             upload_to='gift/')
     
-    intro = models.CharField(verbose_name='简介', max_length=100, null=False, blank=False)
-    detail = models.ImageField(verbose_name='详细介绍（长图）', null=False, blank=False,
+    intro = models.TextField(verbose_name='介绍', null=False, blank=False)
+    detail = models.ImageField(verbose_name='详细介绍（长图）', null=True, blank=False,
                             upload_to='gift/')
     price = models.DecimalField(verbose_name='单价', null=False, blank=False, max_digits=7, decimal_places=2,
                                 validators=[MinValueValidator(1)])
@@ -230,10 +238,14 @@ class GiftPic(models.Model):
                                  null=False, blank=False, on_delete=models.CASCADE)
     pic = models.ImageField(verbose_name='图片', null=False, blank=False,
                             upload_to='giftpic/')
+    class Meta:
+        verbose_name = "挚礼的产品摄影"
+        verbose_name_plural = "挚礼的产品摄影"
 
 class GiftPicSerializer(serializers.ModelSerializer):
     class Meta:
         model = GiftPic
+        exclude = ['id', 'gift']
 
 class GiftSerializer1(serializers.ModelSerializer):
     type = serializers.CharField(source='typ')

@@ -4,6 +4,27 @@ from django.utils.safestring import mark_safe
 from .models import *
 from user.admin import ExportExcelMixin
 
+class GemstonePicInline(admin.TabularInline):
+    fields = ('pic','thumbnail',)
+    model = GemstonePic
+    extra = 0  # 默认显示 0 个 
+    
+    readonly_fields = ('thumbnail',)
+    @admin.display(description="缩略图")
+    def thumbnail(self, obj):
+        if obj.pic:
+            return mark_safe(f'<img src="{obj.pic.url}" height="80" />')
+        else:
+            return '-'
+
+    def has_add_permission(self, request, obj=None):
+        return True
+    def has_delete_permission(self, request, obj=None):
+        return True
+    def has_change_permission(self, request, obj=None):
+        return True
+
+
 class GemAdmin(admin.ModelAdmin, ExportExcelMixin):
     list_display = ("id", "name", 'typ', 'thumbnail', 'loc',
                     'price',)
@@ -18,12 +39,14 @@ class GemAdmin(admin.ModelAdmin, ExportExcelMixin):
     
     actions = ['export_as_excel']
     
+    inlines = [GemstonePicInline]
+
+    @admin.display(description="封面缩略图")
     def thumbnail(self, obj):
-        if obj.pic:
-            return mark_safe(f'<img src="{obj.pic.url}" height="80" />')
+        if obj.cover:
+            return mark_safe(f'<img src="{obj.cover.url}" height="80" />')
         else:
             return '-'
-    thumbnail.short_description = '缩略图'
     
     def has_add_permission(self, request, obj=None):
         return True
@@ -32,6 +55,26 @@ class GemAdmin(admin.ModelAdmin, ExportExcelMixin):
     def has_change_permission(self, request, obj=None):
         return True
 
+
+class BraceletPicInline(admin.TabularInline):
+    fields = ('pic','thumbnail',)
+    model = BraceletPic
+    extra = 0  # 默认显示 0 个 
+    
+    readonly_fields = ('thumbnail',)
+    @admin.display(description="缩略图")
+    def thumbnail(self, obj):
+        if obj.pic:
+            return mark_safe(f'<img src="{obj.pic.url}" height="80" />')
+        else:
+            return '-'
+
+    def has_add_permission(self, request, obj=None):
+        return True
+    def has_delete_permission(self, request, obj=None):
+        return True
+    def has_change_permission(self, request, obj=None):
+        return True
 
 class BraceAdmin(admin.ModelAdmin, ExportExcelMixin):
     list_display = ("id", "name", 'typ', 'thumbnail', 'loc',
@@ -47,12 +90,14 @@ class BraceAdmin(admin.ModelAdmin, ExportExcelMixin):
     
     actions = ['export_as_excel']
     
+    inlines = [BraceletPicInline]
+    
+    @admin.display(description="封面缩略图")
     def thumbnail(self, obj):
-        if obj.pic:
-            return mark_safe(f'<img src="{obj.pic.url}" height="80" />')
+        if obj.cover:
+            return mark_safe(f'<img src="{obj.cover.url}" height="80" />')
         else:
             return '-'
-    thumbnail.short_description = '缩略图'
     
     def has_add_permission(self, request, obj=None):
         return True
@@ -61,6 +106,26 @@ class BraceAdmin(admin.ModelAdmin, ExportExcelMixin):
     def has_change_permission(self, request, obj=None):
         return True
 
+
+class GiftPicInline(admin.TabularInline):
+    fields = ('pic','thumbnail',)
+    model = GiftPic
+    extra = 0  # 默认显示 0 个 
+    
+    readonly_fields = ('thumbnail',)
+    @admin.display(description="缩略图")
+    def thumbnail(self, obj):
+        if obj.pic:
+            return mark_safe(f'<img src="{obj.pic.url}" height="80" />')
+        else:
+            return '-'
+
+    def has_add_permission(self, request, obj=None):
+        return True
+    def has_delete_permission(self, request, obj=None):
+        return True
+    def has_change_permission(self, request, obj=None):
+        return True
 
 class GiftAdmin(admin.ModelAdmin, ExportExcelMixin):
     list_display = ("id", "name", 'typ', 'thumbnail', 'component', 'price',
@@ -76,12 +141,14 @@ class GiftAdmin(admin.ModelAdmin, ExportExcelMixin):
     
     actions = ['export_as_excel']
     
+    inlines = [GiftPicInline]
+
+    @admin.display(description="封面缩略图")
     def thumbnail(self, obj):
-        if obj.pic:
-            return mark_safe(f'<img src="{obj.pic.url}" height="80" />')
+        if obj.cover:
+            return mark_safe(f'<img src="{obj.cover.url}" height="80" />')
         else:
             return '-'
-    thumbnail.short_description = '缩略图'
 
 
     def has_add_permission(self, request, obj=None):

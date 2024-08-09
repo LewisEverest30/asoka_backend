@@ -40,7 +40,8 @@ class Gemstone(models.Model):
     material = models.CharField(verbose_name='材料', max_length=50, 
                         #    choices=Mat_choices, 
                            null=True, blank=False)
-    
+    size = models.IntegerField(verbose_name='尺寸（单位：毫米）', null=True, blank=False, validators=[MinValueValidator(0)])
+
     cover = models.ImageField(verbose_name='封面图片（其他图片在下方产品摄影里添加）', null=True, blank=False,
                             upload_to='gemstone/')
     
@@ -51,6 +52,7 @@ class Gemstone(models.Model):
     intro = models.TextField(verbose_name='介绍', null=False, blank=False)
     price = models.DecimalField(verbose_name='单价', null=False, blank=False, max_digits=7, decimal_places=2,
                                 validators=[MinValueValidator(1)])
+    
 
     def __str__(self):
         return self.name

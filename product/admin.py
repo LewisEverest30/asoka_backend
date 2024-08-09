@@ -26,7 +26,7 @@ class GemstonePicInline(admin.TabularInline):
 
 
 class GemAdmin(admin.ModelAdmin, ExportExcelMixin):
-    list_display = ("id", "name", 'typ', 'thumbnail', 'loc',
+    list_display = ("id", 'thumbnail', "name", 'typ', 'material', 'size',
                     'price',)
     exclude = ()
     readonly_fields = ()
@@ -77,7 +77,7 @@ class BraceletPicInline(admin.TabularInline):
         return True
 
 class BraceAdmin(admin.ModelAdmin, ExportExcelMixin):
-    list_display = ("id", "name", 'typ', 'thumbnail', 'loc',
+    list_display = ("id", 'thumbnail', "name", 'typ',
                     'price',)
     exclude = ()
     readonly_fields = ()

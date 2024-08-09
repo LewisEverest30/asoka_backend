@@ -40,7 +40,7 @@ class Gemstone(models.Model):
     material = models.CharField(verbose_name='材料', max_length=50, 
                         #    choices=Mat_choices, 
                            null=True, blank=False)
-    size = models.IntegerField(verbose_name='尺寸（单位：毫米）', null=True, blank=False, validators=[MinValueValidator(0)])
+    size = models.IntegerField(verbose_name='尺寸（单位：毫米）', null=True, blank=True, validators=[MinValueValidator(0)])
 
     cover = models.ImageField(verbose_name='封面图片（其他图片在下方产品摄影里添加）', null=True, blank=False,
                             upload_to='gemstone/')

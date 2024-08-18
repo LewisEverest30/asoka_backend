@@ -70,15 +70,10 @@ class save_eval_content(APIView):
                 # 已存在则更新，不存在则创建
                 if content_found.count() == 0:  # 尝试创建一条数据
                     newc_content = Evalcontent.objects.create(user_id=userid, forself=forself, name=name, gender=gender,
-                                                            birthdt=birthdt, birthloc=birthloc, liveloc=liveloc,
-                                                            job=job, belief=belief, mood=mood, question1=question1,
-                                                            question2=question2, question3=question3,
-                                                            question4=question4, wish=wish, bazi=bazi_str)
+                                                            birthdt=birthdt, wish=wish, bazi=bazi_str)
                 else:  # 已有该数据, 更新
-                    content_found.update(name=name, gender=gender, birthdt=birthdt, birthloc=birthloc,
-                                                            liveloc=liveloc, job=job, belief=belief, mood=mood, question1=question1,
-                                                            question2=question2, question3=question3,
-                                                            question4=question4, wish=wish, bazi=bazi_str,
+                    content_found.update(name=name, gender=gender, birthdt=birthdt, 
+                                                            wish=wish, bazi=bazi_str,
                                                             update_time=datetime.datetime.now())
         except IntegrityError as e:
             return Response({'ret': 5, 'errmsg': '同一个用户涉及的测评中出现重名'})   

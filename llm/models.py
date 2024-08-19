@@ -1,8 +1,78 @@
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
+from django.conf import settings
 
 from user.models import User
+
+
+REPORT_INFO_DIC = {
+    "祖母绿": {
+        "enname": "Emerald",
+        "symbol": "祖母绿是成长与繁荣的象征，代表仁慈与承诺，是坚韧的守护者。",
+        "pic": settings.MEDIA_URL + "/report/emerald.png",
+        "subtitle1": "成长",
+        "subtitle2": "承诺",
+        "subtitle3": "坚韧",
+    },
+    "翡翠": {
+        "enname": "Jadeite",
+        "symbol": "翡翠是和谐与自然的代表，象征着平衡与尊重，守护与责任感。",
+        "pic": settings.MEDIA_URL + "/report/jadeite.png",
+        "subtitle1": "平衡",
+        "subtitle2": "责任",
+        "subtitle3": "守护",
+    },
+    "金红石": {
+        "enname": "Rutile",
+        "symbol": "金红石是个人力量的体现，代表目标和决心，有积极能量的变革者。",
+        "pic": settings.MEDIA_URL + "/report/rutile.png",
+        "subtitle1": "力量",
+        "subtitle2": "乐观",
+        "subtitle3": "变革",    
+    },
+    "琥珀": {
+        "enname": "Amber",
+        "symbol": "琥珀象征热情与活力，代表对未知世界的好奇心和探索欲，拥有灵活的适应力。",
+        "pic": settings.MEDIA_URL + "/report/amber.png",
+        "subtitle1": "活力",
+        "subtitle2": "探索",
+        "subtitle3": "灵活",    
+    },
+    "绿松石": {
+        "enname": "Turquoise",
+        "symbol": "绿松石象征理想主义，代表对和平与共存的追求，直觉和创造力，慈悲与包容。",
+        "pic": settings.MEDIA_URL + "/report/turquoise.png",
+        "subtitle1": "理想",
+        "subtitle2": "和平",
+        "subtitle3": "慈悲",    
+    },
+    "海蓝石": {
+        "enname": "Aquamarine",
+        "symbol": "海蓝石是一种代表对世界的深刻洞察，是创造力的源泉，象征慈悲与理解。",
+        "pic": settings.MEDIA_URL + "/report/aquamarine.png",
+        "subtitle1": "洞察",
+        "subtitle2": "慈悲",
+        "subtitle3": "创造",    
+    },
+    "紫珍珠": {
+        "enname": "Purple pearl",
+        "symbol": "紫珍珠象征着冷静的智慧启迪、感性的共鸣以及内心世界的平衡。",
+        "pic": settings.MEDIA_URL + "/report/purplepearl.png",
+        "subtitle1": "智慧",
+        "subtitle2": "共鸣",
+        "subtitle3": "平衡",    
+    },
+    "堇青石": {
+        "enname": "Cordierite",
+        "symbol": "堇青石是一种代表智慧、清晰和忠诚的宝石，象征理性智慧，心灵启迪和深情厚谊。",
+        "pic": settings.MEDIA_URL + "/report/cordierite.png",
+        "subtitle1": "智慧",
+        "subtitle2": "清晰",
+        "subtitle3": "忠诚",    
+    },
+}
+
 
 # Create your models here.
 class Evalcontent(models.Model):
@@ -143,6 +213,20 @@ class EvalreportSerializer1(serializers.ModelSerializer):
 class EvalreportSerializer2(serializers.ModelSerializer):
     evalcontent_id = serializers.IntegerField(source='evalcontent.id')
     name = serializers.CharField(source='evalcontent.name')
+    template = serializers.SerializerMethodField()
+
+    def get_template(self, obj):
+        default_value = {
+            "enname": "",
+            "symbol": "",
+            "pic": "",
+            "subtitle1": "整体解读",
+            "subtitle2": "心愿",
+            "subtitle3": "建议",
+        }
+        tpl = REPORT_INFO_DIC.get(obj.title, default_value)
+        return tpl
+
     class Meta:
         model = Evalreport
         # fields = '__all__'

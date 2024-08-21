@@ -67,7 +67,7 @@ class Cart(models.Model):
                                  null=True, blank=True, on_delete=models.SET_NULL)
     
     component = models.CharField(verbose_name='组成', max_length=200, null=False, blank=False,
-                                 validators=[Items_Validator])
+                                 validators=[Items_Validator_component])
     quantity = models.IntegerField(verbose_name='数量', null=False, blank=False, validators=[MinValueValidator(0)])
     cost = models.DecimalField(verbose_name='金额', null=False, blank=False, 
                                 max_digits=10, decimal_places=2, validators=[MinValueValidator(1)])

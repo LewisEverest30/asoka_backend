@@ -3,18 +3,22 @@ from django.core.validators import MinValueValidator, RegexValidator
 from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
 
-items_pattern = r'^(\d+\*[^\|\*]+\|)*(\d+\*[^\|\*]+)$'
-Items_Validator = RegexValidator(items_pattern, '请用这样的格式来表示产品的组成: 3*塑料石|2*蓝宝石|1*玉髓手环')
+# pattern_component = r'^(\d+\*[^\|\*]+\|)*(\d+\*[^\|\*]+)$'
+pattern_component = r'^(\d+\*(珠|手链)\-\d+ )*(\d+\*(珠|手链)\-\d+)$'
+# Items_Validator_component = RegexValidator(pattern_component, '请用这样的格式来表示产品的组成: 3*塑料石|2*蓝宝石|1*玉髓手环')
+Items_Validator_component = RegexValidator(pattern_component, '请用这样的格式来表示产品的组成: 个数*珠/手链-id 个数*珠/手链-id。例如: 3*珠-1 2*珠-2 1*手链-1')
 
 
+pattern_symbol = r'^(财运|姻缘|健康|学业|事业|好运)( (财运|姻缘|健康|学业|事业|好运))*$'
+Items_Validator_symbol = RegexValidator(pattern_symbol, '请用这样的格式来表示寓意: 健康 学业 事业。\n可选的寓意有: 财运、姻缘、健康、学业、事业、好运。')
+
+
+# 珠 模型
 class Gemstone(models.Model):
-    
     Type_choices = [
         ('宝石', '宝石'),
         ('其他', '其他'),
-    ]
-
-    
+    ]    
     Symbol_choices = [
         ('财运', '财运'),
         ('姻缘', '姻缘'),
@@ -23,28 +27,52 @@ class Gemstone(models.Model):
         ('事业', '事业'),
         ('好运', '好运'),
     ]
-
     Mat_choices = [
         ('玛瑙', '玛瑙'),
-
         ('其他', '其他'),
     ]
+    Wu_choices = [
+        ('金', '金'),
+        ('木', '木'),
+        ('水', '水'),
+        ('火', '火'),
+        ('土', '土'),
+    ]
+    Pos_choices = [
+        ('顶珠', '顶珠'),
+        ('侧珠', '侧珠'),
+        ('腰珠', '腰珠'),
+        ('子珠', '子珠'),
+        ('配珠', '配珠'),
+        ('其他', '其他'),
+    ]
+
 
     name = models.CharField(verbose_name='名称', max_length=20, null=False, blank=False)
     typ = models.CharField(verbose_name='类别', max_length=20, 
                            choices=Type_choices, null=False, blank=False)
     
-    symbol = models.CharField(verbose_name='寓意', max_length=20, 
-                           choices=Symbol_choices, null=True, blank=False)
+    symbol = models.CharField(verbose_name='寓意 (财运/姻缘/健康/学业/事业/好运, 用空格分隔)', max_length=50, 
+                        #    choices=Symbol_choices, 
+                           validators=[Items_Validator_symbol],
+                           null=True, blank=False)
+    
+    wuxing = models.CharField(verbose_name='五行/色系', max_length=20, 
+                           choices=Wu_choices, null=True, blank=False)
     
     material = models.CharField(verbose_name='材料', max_length=50, 
                         #    choices=Mat_choices, 
+                           null=True, blank=False)
+    
+    position = models.CharField(verbose_name='位置', max_length=20, 
+                           choices=Pos_choices, 
                            null=True, blank=False)
     size = models.IntegerField(verbose_name='尺寸（单位：毫米）', null=True, blank=True, validators=[MinValueValidator(0)])
 
     cover = models.ImageField(verbose_name='封面图片（其他图片在下方产品摄影里添加）', null=True, blank=False,
                             upload_to='gemstone/')
-    
+    thumbnail = models.ImageField(verbose_name='缩略图', null=True, blank=False,
+                            upload_to='gemstone/thumbnail/')
     detail = models.ImageField(verbose_name='详细介绍（长图）', null=True, blank=False,
                             upload_to='gemstone/')
     
@@ -61,6 +89,193 @@ class Gemstone(models.Model):
         verbose_name = "珠"
         verbose_name_plural = "珠"
 
+
+# 手链 模型
+class Bracelet(models.Model):
+    Type_choices = [
+        ('单圈', '单圈'),
+        ('双圈', '双圈'),
+        ('其他', '其他'),
+    ]
+    Symbol_choices = [
+        ('财运', '财运'),
+        ('姻缘', '姻缘'),
+        ('健康', '健康'),
+        ('学业', '学业'),
+        ('事业', '事业'),
+        ('好运', '好运'),
+    ]
+    Mat_choices = [
+        ('玛瑙', '玛瑙'),
+        ('其他', '其他'),
+    ]
+    Wu_choices = [
+        ('金', '金'),
+        ('木', '木'),
+        ('水', '水'),
+        ('火', '火'),
+        ('土', '土'),
+    ]
+
+    name = models.CharField(verbose_name='名称', max_length=20, null=False, blank=False)
+    typ = models.CharField(verbose_name='类别', max_length=20, 
+                           choices=Type_choices, null=False, blank=False)
+    
+    symbol = models.CharField(verbose_name='寓意 (财运/姻缘/健康/学业/事业/好运, 用空格分隔)', max_length=50, 
+                        #    choices=Symbol_choices, 
+                           validators=[Items_Validator_symbol],
+                           null=True, blank=False)
+    
+    wuxing = models.CharField(verbose_name='五行/色系', max_length=20, 
+                           choices=Wu_choices, null=True, blank=False)
+
+    material = models.CharField(verbose_name='材料', max_length=50, 
+                        #    choices=Mat_choices, 
+                           null=True, blank=False)
+    size = models.IntegerField(verbose_name='尺寸', null=True, blank=True, validators=[MinValueValidator(0)])
+   
+    cover = models.ImageField(verbose_name='封面图片（其他图片在下方产品摄影里添加）', null=True, blank=False,
+                            upload_to='bracelet/')
+    thumbnail = models.ImageField(verbose_name='缩略图', null=True, blank=False,
+                            upload_to='bracelet/thumbnail/')
+    detail = models.ImageField(verbose_name='详细介绍（长图）', null=True, blank=False,
+                            upload_to='bracelet/')
+    
+    loc = models.CharField(verbose_name='产地', max_length=50, null=False, blank=False)
+    intro = models.TextField(verbose_name='介绍', null=False, blank=False)
+    price = models.DecimalField(verbose_name='单价', null=False, blank=False, max_digits=7, decimal_places=2,
+                                validators=[MinValueValidator(1)])
+    
+    is_recommended = models.BooleanField(verbose_name="是否为推荐商品", null=False, blank=False, default=False)
+
+    def __str__(self):
+        return self.name
+    class Meta:
+        verbose_name = "手链"
+        verbose_name_plural = "手链"
+
+
+# 印章 模型
+class Stamp(models.Model):
+    Type_choices = [
+        ('其他', '其他'),
+    ]
+    Symbol_choices = [
+        ('财运', '财运'),
+        ('姻缘', '姻缘'),
+        ('健康', '健康'),
+        ('学业', '学业'),
+        ('事业', '事业'),
+        ('好运', '好运'),
+    ]
+    Wu_choices = [
+        ('金', '金'),
+        ('木', '木'),
+        ('水', '水'),
+        ('火', '火'),
+        ('土', '土'),
+    ]
+
+    name = models.CharField(verbose_name='名称', max_length=20, null=False, blank=False)
+    typ = models.CharField(verbose_name='类别', max_length=20, 
+                           choices=Type_choices, null=False, blank=False)
+    
+    symbol = models.CharField(verbose_name='寓意 (财运/姻缘/健康/学业/事业/好运, 用空格分隔)', max_length=50, 
+                        #    choices=Symbol_choices, 
+                           validators=[Items_Validator_symbol],
+                           null=True, blank=False)    
+    
+    wuxing = models.CharField(verbose_name='五行/色系', max_length=20, 
+                           choices=Wu_choices, null=True, blank=False)
+
+    material = models.CharField(verbose_name='材料', max_length=50, 
+                        #    choices=Mat_choices, 
+                           null=True, blank=False)
+    size = models.IntegerField(verbose_name='尺寸', null=True, blank=True, validators=[MinValueValidator(0)])
+
+
+    size = models.IntegerField(verbose_name='尺寸（单位：毫米）', null=True, blank=True, validators=[MinValueValidator(0)])
+
+    cover = models.ImageField(verbose_name='封面图片（其他图片在下方产品摄影里添加）', null=True, blank=False,
+                            upload_to='stamp/')
+    thumbnail = models.ImageField(verbose_name='缩略图', null=True, blank=False,
+                            upload_to='stamp/thumbnail/')
+    detail = models.ImageField(verbose_name='详细介绍（长图）', null=True, blank=False,
+                            upload_to='stamp/')
+    
+    loc = models.CharField(verbose_name='产地', max_length=50, null=False, blank=False)
+    intro = models.TextField(verbose_name='介绍', null=False, blank=False)
+    price = models.DecimalField(verbose_name='单价', null=False, blank=False, max_digits=7, decimal_places=2,
+                                validators=[MinValueValidator(1)])
+    
+    is_recommended = models.BooleanField(verbose_name="是否为推荐商品", null=False, blank=False, default=False)
+
+    def __str__(self):
+        return self.name
+    class Meta:
+        verbose_name = "印章"
+        verbose_name_plural = "印章"
+
+
+# 挚礼 模型
+class Gift(models.Model):
+    Type_choices = [
+        ('财运', '财运'),
+        ('姻缘', '姻缘'),
+        ('健康', '健康'),
+        ('学业', '学业'),
+        ('事业', '事业'),
+        ('好运', '好运'),
+    ]
+    Wu_choices = [
+        ('金', '金'),
+        ('木', '木'),
+        ('水', '水'),
+        ('火', '火'),
+        ('土', '土'),
+    ]
+    
+
+    name = models.CharField(verbose_name='名称', max_length=20, null=False, blank=False)
+    
+    symbol = models.CharField(verbose_name='寓意 (财运/姻缘/健康/学业/事业/好运, 用空格分隔)', max_length=50, 
+                        #    choices=Symbol_choices, 
+                           validators=[Items_Validator_symbol],
+                           null=True, blank=False)    
+    
+    wuxing = models.CharField(verbose_name='五行/色系', max_length=20, 
+                           choices=Wu_choices, null=True, blank=False)
+    
+    cover = models.ImageField(verbose_name='封面图片（其他图片在下方产品摄影里添加）', null=True, blank=False,
+                            upload_to='gift/')
+    thumbnail = models.ImageField(verbose_name='缩略图', null=True, blank=False,
+                            upload_to='gift/thumbnail/')
+    detail = models.ImageField(verbose_name='详细介绍（长图）', null=True, blank=False,
+                            upload_to='gift/')
+
+    intro = models.TextField(verbose_name='介绍', null=False, blank=False)
+    
+    price = models.DecimalField(verbose_name='单价', null=False, blank=False, max_digits=7, decimal_places=2,
+                                validators=[MinValueValidator(1)])
+    sales = models.IntegerField(verbose_name='销量', default=0, null=False, blank=False, validators=[MinValueValidator(0)])
+    
+    component = models.CharField(verbose_name='组成 (例如: 3*珠-1 2*珠-2 1*手链-1)', max_length=200, null=False, blank=False,
+                                 validators=[Items_Validator_component])
+
+    is_recommended = models.BooleanField(verbose_name="是否为推荐商品", null=False, blank=False, default=False)
+
+    def __str__(self):
+        return self.name
+    class Meta:
+        verbose_name = "挚礼"
+        verbose_name_plural = "挚礼"
+
+
+
+
+# ----------------------------------------------------------------------------------------------------
+
+# 珠 产品摄影
 class GemstonePic(models.Model):
     gemstone = models.ForeignKey(verbose_name='对应的珠', to=Gemstone, 
                                  null=False, blank=False, on_delete=models.CASCADE)
@@ -70,17 +285,69 @@ class GemstonePic(models.Model):
         verbose_name = "珠的产品摄影"
         verbose_name_plural = "珠的产品摄影"
 
-
 class GemstonePicSerializer(serializers.ModelSerializer):
     class Meta:
         model = GemstonePic
         exclude = ['id', 'gemstone']
 
+
+# 手链 产品摄影
+class BraceletPic(models.Model):
+    bracelet = models.ForeignKey(verbose_name='对应的手链', to=Bracelet, 
+                                 null=False, blank=False, on_delete=models.CASCADE)
+    pic = models.ImageField(verbose_name='图片', null=False, blank=False,
+                            upload_to='braceletpic/')
+    class Meta:
+        verbose_name = "手链的产品摄影"
+        verbose_name_plural = "手链的产品摄影"
+
+class BraceletPicSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = BraceletPic
+        exclude = ['id', 'bracelet']
+
+
+# 印章 产品摄影
+class StampPic(models.Model):
+    stamp = models.ForeignKey(verbose_name='对应的印章', to=Stamp, 
+                                 null=False, blank=False, on_delete=models.CASCADE)
+    pic = models.ImageField(verbose_name='图片', null=False, blank=False,
+                            upload_to='stamppic/')
+    class Meta:
+        verbose_name = "印章的产品摄影"
+        verbose_name_plural = "印章的产品摄影"
+
+class StampPicSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = StampPic
+        exclude = ['id', 'stamp']
+
+
+# 挚礼 产品摄影
+class GiftPic(models.Model):
+    gift = models.ForeignKey(verbose_name='对应的挚礼', to=Gift, 
+                                 null=False, blank=False, on_delete=models.CASCADE)
+    pic = models.ImageField(verbose_name='图片', null=False, blank=False,
+                            upload_to='giftpic/')
+    class Meta:
+        verbose_name = "挚礼的产品摄影"
+        verbose_name_plural = "挚礼的产品摄影"
+
+class GiftPicSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = GiftPic
+        exclude = ['id', 'gift']
+
+
+
+# --------------------------------------------------------------------------------------------
+
+# 珠 序列化器
 class GemstoneSerializer1(serializers.ModelSerializer):
-    type = serializers.CharField(source='typ')
+    # type = serializers.CharField(source='typ')
     class Meta:
         model = Gemstone
-        fields = ['id', 'name', 'type', 'cover']
+        fields = ['id', 'name', 'symbol', 'position', 'size', 'thumbnail', 'cover', 'intro', 'price']
         # exclude = ['user', 'evalcontent']
 
 class GemstoneSerializer2(serializers.ModelSerializer):
@@ -100,80 +367,12 @@ class GemstoneSerializer2(serializers.ModelSerializer):
         exclude = ['typ']
 
 
-
-class Bracelet(models.Model):
-    
-    Type_choices = [
-        ('单圈', '单圈'),
-        ('双圈', '双圈'),
-        ('其他', '其他'),
-    ]
-
-    
-    Symbol_choices = [
-        ('财运', '财运'),
-        ('姻缘', '姻缘'),
-        ('健康', '健康'),
-        ('学业', '学业'),
-        ('事业', '事业'),
-        ('好运', '好运'),
-    ]
-
-    Mat_choices = [
-        ('玛瑙', '玛瑙'),
-
-        ('其他', '其他'),
-    ]
-
-    name = models.CharField(verbose_name='名称', max_length=20, null=False, blank=False)
-    typ = models.CharField(verbose_name='类别', max_length=20, 
-                           choices=Type_choices, null=False, blank=False)
-    
-    symbol = models.CharField(verbose_name='寓意', max_length=20, 
-                           choices=Symbol_choices, null=True, blank=False)
-    
-    material = models.CharField(verbose_name='材料', max_length=50, 
-                        #    choices=Mat_choices, 
-                           null=True, blank=False)
-    
-    cover = models.ImageField(verbose_name='封面图片（其他图片在下方产品摄影里添加）', null=True, blank=False,
-                            upload_to='bracelet/')
-    
-    detail = models.ImageField(verbose_name='详细介绍（长图）', null=True, blank=False,
-                            upload_to='bracelet/')
-    
-    loc = models.CharField(verbose_name='产地', max_length=50, null=False, blank=False)
-    intro = models.TextField(verbose_name='介绍', null=False, blank=False)
-    price = models.DecimalField(verbose_name='单价', null=False, blank=False, max_digits=7, decimal_places=2,
-                                validators=[MinValueValidator(1)])
-    
-    is_recommended = models.BooleanField(verbose_name="是否为推荐商品", null=False, blank=False, default=False)
-
-    def __str__(self):
-        return self.name
-    class Meta:
-        verbose_name = "手链"
-        verbose_name_plural = "手链"
-
-class BraceletPic(models.Model):
-    bracelet = models.ForeignKey(verbose_name='对应的手链', to=Bracelet, 
-                                 null=False, blank=False, on_delete=models.CASCADE)
-    pic = models.ImageField(verbose_name='图片', null=False, blank=False,
-                            upload_to='braceletpic/')
-    class Meta:
-        verbose_name = "手链的产品摄影"
-        verbose_name_plural = "手链的产品摄影"
-
-class BraceletPicSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = BraceletPic
-        exclude = ['id', 'bracelet']
-
+# 链 序列化器
 class BraceletSerializer1(serializers.ModelSerializer):
     type = serializers.CharField(source='typ')
     class Meta:
         model = Bracelet
-        fields = ['id', 'name', 'type', 'cover']
+        fields = ['id', 'name', 'type', 'symbol', 'thumbnail', 'cover', 'intro', 'price']
         # exclude = ['user', 'evalcontent']
 
 class BraceletSerializer2(serializers.ModelSerializer):
@@ -193,75 +392,39 @@ class BraceletSerializer2(serializers.ModelSerializer):
         exclude = ['typ']
 
 
-
-class Gift(models.Model):
-
-    Type_choices = [
-        ('财运', '财运'),
-        ('姻缘', '姻缘'),
-        ('健康', '健康'),
-        ('学业', '学业'),
-        ('事业', '事业'),
-        ('好运', '好运'),
-
-    ]
-
-    # class Type_choices(models.CharChoices):
-    #     cai = 1, _('财运')
-    #     yin = 2, _('姻缘')
-    #     jian = 3, _('健康')
-    #     xue = 4, _('学业')
-    #     shi = 5, _('事业')
-    #     hao = 6, _('好运')
-    
-    name = models.CharField(verbose_name='名称', max_length=20, null=False, blank=False)
-    # typ = models.IntegerField(verbose_name='类别', choices=Type_choices.choices, null=False, blank=False)
-    typ = models.CharField(verbose_name='寓意', max_length=20, 
-                           choices=Type_choices, null=False, blank=False)
-
-    cover = models.ImageField(verbose_name='封面图片（其他图片在下方产品摄影里添加）', null=True, blank=False,
-                            upload_to='gift/')
-    
-    intro = models.TextField(verbose_name='介绍', null=False, blank=False)
-    detail = models.ImageField(verbose_name='详细介绍（长图）', null=True, blank=False,
-                            upload_to='gift/')
-    price = models.DecimalField(verbose_name='单价', null=False, blank=False, max_digits=7, decimal_places=2,
-                                validators=[MinValueValidator(1)])
-    sales = models.IntegerField(verbose_name='销量', default=0, null=False, blank=False, validators=[MinValueValidator(0)])
-    component = models.CharField(verbose_name='组成\n (示例: 3*塑料石|2*蓝宝石|1*玉髓手环)', max_length=200, null=False, blank=False,
-                                 validators=[Items_Validator])
-
-    is_recommended = models.BooleanField(verbose_name="是否为推荐商品", null=False, blank=False, default=False)
-
-    def __str__(self):
-        return self.name
-    class Meta:
-        verbose_name = "挚礼"
-        verbose_name_plural = "挚礼"
-
-class GiftPic(models.Model):
-    gift = models.ForeignKey(verbose_name='对应的挚礼', to=Gift, 
-                                 null=False, blank=False, on_delete=models.CASCADE)
-    pic = models.ImageField(verbose_name='图片', null=False, blank=False,
-                            upload_to='giftpic/')
-    class Meta:
-        verbose_name = "挚礼的产品摄影"
-        verbose_name_plural = "挚礼的产品摄影"
-
-class GiftPicSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = GiftPic
-        exclude = ['id', 'gift']
-
-class GiftSerializer1(serializers.ModelSerializer):
+# 印章 序列化器
+class StampSerializer1(serializers.ModelSerializer):
     type = serializers.CharField(source='typ')
     class Meta:
+        model = Stamp
+        fields = ['id', 'name', 'type', 'symbol', 'thumbnail', 'cover', 'intro', 'price']
+        # exclude = ['user', 'evalcontent']
+
+class StampSerializer2(serializers.ModelSerializer):
+    type = serializers.CharField(source='typ')
+    pics = serializers.SerializerMethodField()
+    
+    def get_pics(self, obj):
+        found = StampPic.objects.filter(stamp_id=obj.id)
+        if found.count() > 0:
+            serializer = StampPicSerializer(instance=found, many=True)            
+            return serializer.data
+        else:
+            return None
+
+    class Meta:
+        model = Stamp
+        exclude = ['typ']
+
+
+# 挚礼 序列化器
+class GiftSerializer1(serializers.ModelSerializer):
+    class Meta:
         model = Gift
-        fields = ['id', 'name', 'type', 'cover', 'intro', 'price', 'sales']
+        fields = ['id', 'name', 'symbol', 'cover', 'intro', 'price', 'sales']
         # exclude = ['user', 'evalcontent']
 
 class GiftSerializer2(serializers.ModelSerializer):
-    type = serializers.CharField(source='typ')
     pics = serializers.SerializerMethodField()
     
     def get_pics(self, obj):
@@ -272,97 +435,6 @@ class GiftSerializer2(serializers.ModelSerializer):
         else:
             return None
 
-
     class Meta:
         model = Gift
-        exclude = ['typ']
-
-
-
-class Stamp(models.Model):
-    
-    Type_choices = [
-        ('其他', '其他'),
-    ]
-
-    
-    Symbol_choices = [
-        ('财运', '财运'),
-        ('姻缘', '姻缘'),
-        ('健康', '健康'),
-        ('学业', '学业'),
-        ('事业', '事业'),
-        ('好运', '好运'),
-    ]
-
-
-    name = models.CharField(verbose_name='名称', max_length=20, null=False, blank=False)
-    typ = models.CharField(verbose_name='类别', max_length=20, 
-                           choices=Type_choices, null=False, blank=False)
-    
-    symbol = models.CharField(verbose_name='寓意', max_length=20, 
-                           choices=Symbol_choices, null=True, blank=False)
-    
-    material = models.CharField(verbose_name='材料', max_length=50, 
-                        #    choices=Mat_choices, 
-                           null=True, blank=False)
-    
-    size = models.IntegerField(verbose_name='尺寸（单位：毫米）', null=True, blank=True, validators=[MinValueValidator(0)])
-
-    cover = models.ImageField(verbose_name='封面图片（其他图片在下方产品摄影里添加）', null=True, blank=False,
-                            upload_to='gemstone/')
-    
-    detail = models.ImageField(verbose_name='详细介绍（长图）', null=True, blank=False,
-                            upload_to='gemstone/')
-    
-    loc = models.CharField(verbose_name='产地', max_length=50, null=False, blank=False)
-    intro = models.TextField(verbose_name='介绍', null=False, blank=False)
-    price = models.DecimalField(verbose_name='单价', null=False, blank=False, max_digits=7, decimal_places=2,
-                                validators=[MinValueValidator(1)])
-    
-    is_recommended = models.BooleanField(verbose_name="是否为推荐商品", null=False, blank=False, default=False)
-
-    def __str__(self):
-        return self.name
-    class Meta:
-        verbose_name = "印章"
-        verbose_name_plural = "印章"
-
-
-class StampPic(models.Model):
-    stamp = models.ForeignKey(verbose_name='对应的印章', to=Stamp, 
-                                 null=False, blank=False, on_delete=models.CASCADE)
-    pic = models.ImageField(verbose_name='图片', null=False, blank=False,
-                            upload_to='stamppic/')
-    class Meta:
-        verbose_name = "印章的产品摄影"
-        verbose_name_plural = "印章的产品摄影"
-
-
-class StampPicSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = StampPic
-        exclude = ['id', 'stamp']
-
-class StampSerializer1(serializers.ModelSerializer):
-    type = serializers.CharField(source='typ')
-    class Meta:
-        model = Stamp
-        fields = ['id', 'name', 'type', 'cover']
-        # exclude = ['user', 'evalcontent']
-
-class StampSerializer2(serializers.ModelSerializer):
-    type = serializers.CharField(source='typ')
-    pics = serializers.SerializerMethodField()
-    
-    def get_pics(self, obj):
-        found = StampPic.objects.filter(gemstone_id=obj.id)
-        if found.count() > 0:
-            serializer = StampPicSerializer(instance=found, many=True)            
-            return serializer.data
-        else:
-            return None
-
-    class Meta:
-        model = Stamp
-        exclude = ['typ']
+        fields = '__all__'

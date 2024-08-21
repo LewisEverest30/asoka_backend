@@ -50,6 +50,9 @@ urlpatterns = [
     path('get_all_gift', get_all_gift.as_view()),
     path('get_gift_by_type', get_gift_by_type.as_view()),
     path('get_certain_gift', get_certain_gift.as_view()),
+    path('get_all_stamp', get_all_stamp.as_view()),
+    path('get_certain_stamp', get_certain_stamp.as_view()),
+    path('get_recommended_product', get_recommended_product.as_view()),
 
     path('create_cart', create_cart.as_view()),
     path('get_all_cart', get_all_cart.as_view()),

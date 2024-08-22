@@ -324,7 +324,7 @@ class generate_eval_report(APIView):
                 return Response({'ret': 7, 'errmsg': '大模型故障', 'data':None})
 
 
-            parts = llm_result['content'].split('###')[1:]
+            parts = llm_result['content'].split('###')[1:]  # 测评报告的各个部分
             report_parts = []
             for s in parts:
                 report_parts.append(s.strip())
@@ -332,14 +332,25 @@ class generate_eval_report(APIView):
             report_found = Evalreport.objects.filter(user_id=userid, evalcontent__name=name)
             # 已存在则更新，不存在则创建
             if report_found.count() == 0:  # 尝试创建一条数据
+                
+                # todo 等待llm对齐
+                # newc_report = Evalreport.objects.create(user_id=userid, evalcontent=content_found[0],
+                #                                         title=report_parts[1], overall=report_parts[2], 
+                #                                         wish=report_parts[3], advice=report_parts[4])
                 newc_report = Evalreport.objects.create(user_id=userid, evalcontent=content_found[0],
-                                                        title=report_parts[1], overall=report_parts[2], 
-                                                        wish=report_parts[3], advice=report_parts[4])
+                                                        title=report_parts[1], overall_1=report_parts[2], 
+                                                        overall_2=report_parts[3], overall_3=report_parts[4],
+                                                        advice='TODO')
                 serializer = EvalreportSerializer2(instance=newc_report, many=False)
+                
             else:  # 已有该数据, 更新
-                report_found.update(title=report_parts[1], overall=report_parts[2], 
-                                    wish=report_parts[3], advice=report_parts[4],
+
+                # todo 等待llm对齐
+                report_found.update(title=report_parts[1], overall_1=report_parts[2], 
+                                    overall_2=report_parts[3], overall_3=report_parts[4],
+                                    advice='TODO',
                                     update_time=datetime.datetime.now())
+                
                 serializer = EvalreportSerializer2(instance=report_found[0], many=False)
             return Response({'ret': 0, 'errmsg':None, 'data':serializer.data})
         except Exception as e:

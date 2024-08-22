@@ -60,8 +60,7 @@ class EvalcontentInline(admin.TabularInline):
 class EvalreportAdmin(admin.ModelAdmin, ExportExcelMixin):
     list_display = ("id", 'name', "user", 'title', 'create_time')
     exclude = ()
-    readonly_fields = ("id", "user", 'evalcontent', 'title', 'overall', 'wish',
-                    'advice', 'create_time', 'update_time')
+    readonly_fields = ()
 
     list_display_links = ['name',]
 

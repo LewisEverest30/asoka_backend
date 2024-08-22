@@ -147,6 +147,11 @@ class EvalcontentSerializer(serializers.ModelSerializer):
         exclude = ['user']
 
 
+
+
+
+
+
 class Chathistory(models.Model):
     
     class Talker_choices(models.IntegerChoices):
@@ -174,6 +179,12 @@ class ChathistorySerializer(serializers.ModelSerializer):
         fields = ['talker', 'msg', 'create_time']
 
 
+
+
+
+
+
+
 class Evalreport(models.Model):
     
     class Gender_choices(models.IntegerChoices):
@@ -186,8 +197,10 @@ class Evalreport(models.Model):
 
     # 报告内容
     title = models.CharField(verbose_name='标题', max_length=50, null=False)
-    overall = models.CharField(verbose_name='整体解读', max_length=2000, null=False)
-    wish = models.CharField(verbose_name='心愿', max_length=1000, null=False)
+    overall_1 = models.CharField(verbose_name='整体解读-关键词1', max_length=2000, null=False, default="......")
+    overall_2 = models.CharField(verbose_name='整体解读-关键词2', max_length=2000, null=False, default="......")
+    overall_3 = models.CharField(verbose_name='整体解读-关键词3', max_length=2000, null=False, default="......")
+
     advice = models.CharField(verbose_name='建议', max_length=1000, null=False)
 
     create_time = models.DateTimeField(verbose_name='创建时间', auto_now_add=True) 

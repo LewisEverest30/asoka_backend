@@ -48,7 +48,7 @@ urlpatterns = [
     path('get_all_bracelet', get_all_bracelet.as_view()),
     path('get_certain_bracelet', get_certain_bracelet.as_view()),
     path('get_all_gift', get_all_gift.as_view()),
-    path('get_gift_by_type', get_gift_by_type.as_view()),
+    path('get_gift_by_symbol', get_gift_by_symbol.as_view()),
     path('get_certain_gift', get_certain_gift.as_view()),
     path('get_all_stamp', get_all_stamp.as_view()),
     path('get_certain_stamp', get_certain_stamp.as_view()),

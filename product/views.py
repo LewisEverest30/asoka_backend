@@ -106,13 +106,15 @@ class get_all_gift(APIView):
             return Response({'ret': 0, 'data': list(serializer.data)})
 
 # 获取某个类别的挚礼
-class get_gift_by_type(APIView):
+class get_gift_by_symbol(APIView):
     authentication_classes = [MyJWTAuthentication, ]
     def post(self,request,*args,**kwargs):
         userid = request.user['userid']
         info = json.loads(request.body)
-        typ = info['type']
-        found = Gift.objects.filter(typ=typ)
+        typ = info['symbol']
+        
+        found = Gift.objects.filter(symbol__contains=typ)
+
         if found.count() == 0:
             return Response({'ret': -1, 'data': None})
         else:

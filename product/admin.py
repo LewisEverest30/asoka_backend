@@ -28,10 +28,10 @@ class GemstonePicInline(admin.TabularInline):
 
 
 class GemAdmin(admin.ModelAdmin, ExportExcelMixin):
-    list_display = ("id", "name", "thumbnailpic", 'coverpic', 'typ', 'material', 'size',
+    list_display = ("id", "name", "thumbnailpic", 'coverpic', 'material', 'position', 'size',
                     'price',)
     exclude = ()
-    readonly_fields = ("id",)
+    readonly_fields = ("id", 'create_time', 'update_time')
 
 
     list_display_links = ['name']
@@ -91,7 +91,7 @@ class BraceAdmin(admin.ModelAdmin, ExportExcelMixin):
     list_display = ("id", "name", "thumbnailpic", 'coverpic', 'typ',
                     'price',)
     exclude = ()
-    readonly_fields = ("id",)
+    readonly_fields = ("id", 'create_time', 'update_time')
 
 
     list_display_links = ['name']
@@ -152,7 +152,7 @@ class StampAdmin(admin.ModelAdmin, ExportExcelMixin):
     list_display = ("id", "name", "thumbnailpic", 'coverpic', 'typ', 'material',
                     'price',)
     exclude = ()
-    readonly_fields = ("id",)
+    readonly_fields = ("id", 'create_time', 'update_time')
 
 
     list_display_links = ['name']
@@ -212,7 +212,7 @@ class GiftAdmin(admin.ModelAdmin, ExportExcelMixin):
     list_display = ("id", "name", 'coverpic', 'component', 'price',
                     'sales',)
     exclude = ()
-    readonly_fields = ("id",)
+    readonly_fields = ("id", 'create_time', 'update_time')
 
 
     list_display_links = ['name']
@@ -241,6 +241,35 @@ class GiftAdmin(admin.ModelAdmin, ExportExcelMixin):
 
 
 
+# ---------------------------------------------------------------------
+class SchemeAdmin(admin.ModelAdmin, ExportExcelMixin):
+    list_display = ("id", "name", 'thumbnailpic', 'structure', 'is_user_defined', 'user')
+    exclude = ()
+    readonly_fields = ("id", 'create_time', 'update_time', 'user', 'is_user_defined')
+
+
+    list_display_links = ['name']
+
+    list_filter = ()
+    search_fields = ("name",)
+    
+    actions = ['export_as_excel']
+    
+
+    @admin.display(description="示意图")
+    def thumbnailpic(self, obj):
+        if obj.thumbnail:
+            return mark_safe(f'<img src="{obj.thumbnail.url}" width="100" height="auto" />')
+        else:
+            return '-'
+
+
+    def has_add_permission(self, request, obj=None):
+        return True
+    def has_delete_permission(self, request, obj=None):
+        return True
+    def has_change_permission(self, request, obj=None):
+        return True
 
 
 admin.site.register(Gemstone, GemAdmin)
@@ -250,3 +279,5 @@ admin.site.register(Bracelet, BraceAdmin)
 admin.site.register(Gift, GiftAdmin)
 
 admin.site.register(Stamp, StampAdmin)
+
+admin.site.register(Scheme_Template, SchemeAdmin)

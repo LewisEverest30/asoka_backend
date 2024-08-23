@@ -2,6 +2,7 @@ from django.db import models
 from django.core.validators import MinValueValidator, RegexValidator
 from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
+from user.models import *
 
 # pattern_component = r'^(\d+\*[^\|\*]+\|)*(\d+\*[^\|\*]+)$'
 pattern_component = r'^(\d+\*(珠|手链)\-\d+ )*(\d+\*(珠|手链)\-\d+)$'
@@ -9,8 +10,13 @@ pattern_component = r'^(\d+\*(珠|手链)\-\d+ )*(\d+\*(珠|手链)\-\d+)$'
 Items_Validator_component = RegexValidator(pattern_component, '请用这样的格式来表示产品的组成: 个数*珠/手链-id 个数*珠/手链-id。例如: 3*珠-1 2*珠-2 1*手链-1')
 
 
-pattern_symbol = r'^(财运|姻缘|健康|学业|事业|好运)( (财运|姻缘|健康|学业|事业|好运))*$'
-Items_Validator_symbol = RegexValidator(pattern_symbol, '请用这样的格式来表示寓意: 健康 学业 事业。\n可选的寓意有: 财运、姻缘、健康、学业、事业、好运。')
+pattern_symbol = r'^(财运|姻缘|健康|学业|事业|转运|平安|解忧)( (财运|姻缘|健康|学业|事业|转运|平安|解忧))*$'
+Items_Validator_symbol = RegexValidator(pattern_symbol, '请用这样的格式来表示寓意: 健康 学业 事业。\n可选的寓意有: 财运、姻缘、健康、学业、事业、转运、平安、解忧。')
+
+pattern_structure = r'^(1|2|3|4)( (1|2|3|4))*$'
+Items_Validator_structure = RegexValidator(pattern_structure, "从顶珠开始顺时针记录, 用数字表示该位置的珠子类型, 空格分隔, 顶珠-1、腰珠-2、子珠-3、配珠-4 \n  \
+                                    例如: 1 2 3 2 3 2 3 2 3 2 3 2 3 2")
+
 
 
 # 珠 模型
@@ -40,7 +46,6 @@ class Gemstone(models.Model):
     ]
     Pos_choices = [
         ('顶珠', '顶珠'),
-        ('侧珠', '侧珠'),
         ('腰珠', '腰珠'),
         ('子珠', '子珠'),
         ('配珠', '配珠'),
@@ -52,8 +57,9 @@ class Gemstone(models.Model):
     typ = models.CharField(verbose_name='类别', max_length=20, 
                            choices=Type_choices, null=False, blank=False)
     
-    symbol = models.CharField(verbose_name='寓意 (财运/姻缘/健康/学业/事业/好运, 用空格分隔)', max_length=50, 
+    symbol = models.CharField(verbose_name='寓意', max_length=50, 
                         #    choices=Symbol_choices, 
+                           help_text='请用这样的格式来表示寓意: 健康 学业 事业。\n可选的寓意有: 财运、姻缘、健康、学业、事业、转运、平安、解忧。',
                            validators=[Items_Validator_symbol],
                            null=True, blank=False)
     
@@ -82,6 +88,10 @@ class Gemstone(models.Model):
                                 validators=[MinValueValidator(1)])
     
     is_recommended = models.BooleanField(verbose_name="是否为推荐商品", null=False, blank=False, default=False)
+
+    create_time = models.DateTimeField(verbose_name='创建时间', auto_now_add=True, null=True) 
+    update_time = models.DateTimeField(verbose_name='修改时间', auto_now=True, null=True)
+
 
     def __str__(self):
         return self.name
@@ -121,8 +131,9 @@ class Bracelet(models.Model):
     typ = models.CharField(verbose_name='类别', max_length=20, 
                            choices=Type_choices, null=False, blank=False)
     
-    symbol = models.CharField(verbose_name='寓意 (财运/姻缘/健康/学业/事业/好运, 用空格分隔)', max_length=50, 
+    symbol = models.CharField(verbose_name='寓意', max_length=50, 
                         #    choices=Symbol_choices, 
+                           help_text='请用这样的格式来表示寓意: 健康 学业 事业。\n可选的寓意有: 财运、姻缘、健康、学业、事业、转运、平安、解忧。',
                            validators=[Items_Validator_symbol],
                            null=True, blank=False)
     
@@ -147,6 +158,10 @@ class Bracelet(models.Model):
                                 validators=[MinValueValidator(1)])
     
     is_recommended = models.BooleanField(verbose_name="是否为推荐商品", null=False, blank=False, default=False)
+
+    create_time = models.DateTimeField(verbose_name='创建时间', auto_now_add=True, null=True) 
+    update_time = models.DateTimeField(verbose_name='修改时间', auto_now=True, null=True)
+
 
     def __str__(self):
         return self.name
@@ -180,10 +195,11 @@ class Stamp(models.Model):
     typ = models.CharField(verbose_name='类别', max_length=20, 
                            choices=Type_choices, null=False, blank=False)
     
-    symbol = models.CharField(verbose_name='寓意 (财运/姻缘/健康/学业/事业/好运, 用空格分隔)', max_length=50, 
+    symbol = models.CharField(verbose_name='寓意', max_length=50, 
                         #    choices=Symbol_choices, 
+                           help_text='请用这样的格式来表示寓意: 健康 学业 事业。\n可选的寓意有: 财运、姻缘、健康、学业、事业、转运、平安、解忧。',
                            validators=[Items_Validator_symbol],
-                           null=True, blank=False)    
+                           null=True, blank=False)
     
     wuxing = models.CharField(verbose_name='五行/色系', max_length=20, 
                            choices=Wu_choices, null=True, blank=False)
@@ -209,6 +225,10 @@ class Stamp(models.Model):
                                 validators=[MinValueValidator(1)])
     
     is_recommended = models.BooleanField(verbose_name="是否为推荐商品", null=False, blank=False, default=False)
+
+    create_time = models.DateTimeField(verbose_name='创建时间', auto_now_add=True, null=True) 
+    update_time = models.DateTimeField(verbose_name='修改时间', auto_now=True, null=True)
+
 
     def __str__(self):
         return self.name
@@ -238,10 +258,11 @@ class Gift(models.Model):
 
     name = models.CharField(verbose_name='名称', max_length=20, null=False, blank=False)
     
-    symbol = models.CharField(verbose_name='寓意 (财运/姻缘/健康/学业/事业/好运, 用空格分隔)', max_length=50, 
+    symbol = models.CharField(verbose_name='寓意', max_length=50, 
                         #    choices=Symbol_choices, 
+                           help_text='请用这样的格式来表示寓意: 健康 学业 事业。\n可选的寓意有: 财运、姻缘、健康、学业、事业、转运、平安、解忧。',
                            validators=[Items_Validator_symbol],
-                           null=True, blank=False)    
+                           null=True, blank=False)
     
     wuxing = models.CharField(verbose_name='五行/色系', max_length=20, 
                            choices=Wu_choices, null=True, blank=False)
@@ -259,16 +280,67 @@ class Gift(models.Model):
                                 validators=[MinValueValidator(1)])
     sales = models.IntegerField(verbose_name='销量', default=0, null=False, blank=False, validators=[MinValueValidator(0)])
     
-    component = models.CharField(verbose_name='组成 (例如: 3*珠-1 2*珠-2 1*手链-1)', max_length=200, null=False, blank=False,
+    component = models.CharField(verbose_name='组成 ', max_length=200, null=False, blank=False,
+                                 help_text='请用这样的格式来表示产品的组成: 个数*珠/手链-id 个数*珠/手链-id。例如: 3*珠-1 2*珠-2 1*手链-1',
                                  validators=[Items_Validator_component])
 
     is_recommended = models.BooleanField(verbose_name="是否为推荐商品", null=False, blank=False, default=False)
+
+    create_time = models.DateTimeField(verbose_name='创建时间', auto_now_add=True, null=True) 
+    update_time = models.DateTimeField(verbose_name='修改时间', auto_now=True, null=True)
+
 
     def __str__(self):
         return self.name
     class Meta:
         verbose_name = "挚礼"
         verbose_name_plural = "挚礼"
+
+
+
+
+# 方案模板 模型
+class Scheme_Template(models.Model):
+    Pos_choices = [
+        ('顶珠', '顶珠'),
+        # ('侧珠', '侧珠'),
+        ('腰珠', '腰珠'),
+        ('子珠', '子珠'),
+        ('配珠', '配珠'),
+        ('其他', '其他'),
+    ]
+
+    name = models.CharField(verbose_name='名称', max_length=20, null=False, blank=False)
+    
+    is_user_defined = models.BooleanField(verbose_name='是否为用户自定义的', default=False, blank=True)
+    user = models.ForeignKey(verbose_name='用户', to=User, on_delete=models.CASCADE, null=True, blank=True)
+    
+    # todo 是否需要区分人名
+    # name = models.
+
+    dingzhu = models.IntegerField(verbose_name='顶珠个数', null=False, blank=False, default=0, validators=[MinValueValidator(0)])
+    yaozhu = models.IntegerField(verbose_name='腰珠个数', null=False, blank=False, default=0, validators=[MinValueValidator(0)])
+    zizhu = models.IntegerField(verbose_name='子珠个数', null=False, blank=False, default=0, validators=[MinValueValidator(0)])
+    peizhu = models.IntegerField(verbose_name='配珠个数', null=False, blank=False, default=0, validators=[MinValueValidator(0)])
+
+    structure = models.CharField(verbose_name='模板结构描述',
+                                help_text="从顶珠开始顺时针记录, 用数字表示该位置的珠子类型, 空格分隔, 顶珠-1、腰珠-2、子珠-3、配珠-4。 \n  \
+                                    例如: 1 2 3 2 3 2 3 2 3 2 3 2 3 2", 
+                                max_length=100,
+                                validators=[Items_Validator_structure],
+                                null=True, blank=False)
+
+    thumbnail = models.ImageField(verbose_name='示意图', null=True, blank=False, upload_to='scheme/thumbnail/')
+    
+    create_time = models.DateTimeField(verbose_name='创建时间', auto_now_add=True, null=True) 
+    update_time = models.DateTimeField(verbose_name='修改时间', auto_now=True, null=True)
+
+
+    def __str__(self):
+        return self.name
+    class Meta:
+        verbose_name = "方案模板"
+        verbose_name_plural = "方案模板"
 
 
 
@@ -364,7 +436,7 @@ class GemstoneSerializer2(serializers.ModelSerializer):
 
     class Meta:
         model = Gemstone
-        exclude = ['typ']
+        exclude = ['typ', 'create_time', 'update_time']
 
 
 # 链 序列化器
@@ -389,7 +461,7 @@ class BraceletSerializer2(serializers.ModelSerializer):
 
     class Meta:
         model = Bracelet
-        exclude = ['typ']
+        exclude = ['typ', 'create_time', 'update_time']
 
 
 # 印章 序列化器
@@ -414,7 +486,7 @@ class StampSerializer2(serializers.ModelSerializer):
 
     class Meta:
         model = Stamp
-        exclude = ['typ']
+        exclude = ['typ', 'create_time', 'update_time']
 
 
 # 挚礼 序列化器
@@ -437,4 +509,10 @@ class GiftSerializer2(serializers.ModelSerializer):
 
     class Meta:
         model = Gift
-        fields = '__all__'
+        # fields = '__all__'
+        exclude = ['create_time', 'update_time']
+
+
+
+
+

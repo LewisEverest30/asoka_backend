@@ -45,6 +45,7 @@ urlpatterns = [
 
     path('get_all_gem', get_all_gem.as_view()),
     path('get_certain_gem', get_certain_gem.as_view()),
+    path('get_certain_gem_byname', get_certain_gem_byname.as_view()),
     path('get_all_bracelet', get_all_bracelet.as_view()),
     path('get_certain_bracelet', get_certain_bracelet.as_view()),
     path('get_all_gift', get_all_gift.as_view()),
@@ -53,6 +54,9 @@ urlpatterns = [
     path('get_all_stamp', get_all_stamp.as_view()),
     path('get_certain_stamp', get_certain_stamp.as_view()),
     path('get_recommended_product', get_recommended_product.as_view()),
+
+    path('get_all_scheme', get_all_scheme_template.as_view()),
+    path('get_advice', get_advice.as_view()),
 
     path('create_cart', create_cart.as_view()),
     path('get_all_cart', get_all_cart.as_view()),

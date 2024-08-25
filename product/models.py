@@ -53,7 +53,7 @@ class Gemstone(models.Model):
     ]
 
 
-    name = models.CharField(verbose_name='名称', max_length=20, null=False, blank=False)
+    name = models.CharField(verbose_name='名称', max_length=20, null=False, blank=False, db_index=True)
     typ = models.CharField(verbose_name='类别', max_length=20, 
                            choices=Type_choices, null=False, blank=False)
     
@@ -438,6 +438,17 @@ class GemstoneSerializer2(serializers.ModelSerializer):
         model = Gemstone
         exclude = ['typ', 'create_time', 'update_time']
 
+class GemstoneSerializer3(serializers.ModelSerializer):
+    product_type = serializers.SerializerMethodField()
+    
+    def get_product_type(self, obj):
+        return 'gemstone'
+
+    class Meta:
+        model = Gemstone
+        fields = ['product_type', 'id', 'name', 'cover', 'intro', 'price']
+
+
 
 # 链 序列化器
 class BraceletSerializer1(serializers.ModelSerializer):
@@ -462,6 +473,16 @@ class BraceletSerializer2(serializers.ModelSerializer):
     class Meta:
         model = Bracelet
         exclude = ['typ', 'create_time', 'update_time']
+
+class BraceletSerializer3(serializers.ModelSerializer):
+    product_type = serializers.SerializerMethodField()
+    
+    def get_product_type(self, obj):
+        return 'bracelet'
+
+    class Meta:
+        model = Bracelet
+        fields = ['product_type', 'id', 'name', 'cover', 'intro', 'price']
 
 
 # 印章 序列化器
@@ -488,6 +509,16 @@ class StampSerializer2(serializers.ModelSerializer):
         model = Stamp
         exclude = ['typ', 'create_time', 'update_time']
 
+class StampSerializer3(serializers.ModelSerializer):
+    product_type = serializers.SerializerMethodField()
+    
+    def get_product_type(self, obj):
+        return 'stamp'
+
+    class Meta:
+        model = Stamp
+        fields = ['product_type', 'id', 'name', 'cover', 'intro', 'price']
+
 
 # 挚礼 序列化器
 class GiftSerializer1(serializers.ModelSerializer):
@@ -512,7 +543,23 @@ class GiftSerializer2(serializers.ModelSerializer):
         # fields = '__all__'
         exclude = ['create_time', 'update_time']
 
+class GiftSerializer3(serializers.ModelSerializer):
+    product_type = serializers.SerializerMethodField()
+    
+    def get_product_type(self, obj):
+        return 'gift'
+
+    class Meta:
+        model = Gift
+        fields = ['product_type', 'id', 'name', 'cover', 'intro', 'price']
 
 
 
 
+# 模板 序列化器
+class Scheme_TemplateSerializer1(serializers.ModelSerializer):
+    # type = serializers.CharField(source='typ')
+    class Meta:
+        model = Scheme_Template
+        # fields = []
+        exclude = ['user', 'create_time', 'update_time', 'is_user_defined']

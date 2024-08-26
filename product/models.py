@@ -315,7 +315,7 @@ class Scheme_Template(models.Model):
     is_user_defined = models.BooleanField(verbose_name='是否为用户自定义的', default=False, blank=True)
     user = models.ForeignKey(verbose_name='用户', to=User, on_delete=models.CASCADE, null=True, blank=True)
     
-    # todo 是否需要区分人名
+    # todo 是否需要区分人名。目前看不需要
     # name = models.
 
     dingzhu = models.IntegerField(verbose_name='顶珠个数', null=False, blank=False, default=0, validators=[MinValueValidator(0)])

@@ -261,7 +261,7 @@ class clear_chat_history(APIView):
             return Response({'ret': -1})
 
 
-
+# todo 同时生成珠推荐信息 advice
 class generate_eval_report(APIView):
     authentication_classes = [MyJWTAuthentication, ]
     client = Ark(api_key=settings.VOLCENGINE_API_KEY)
@@ -333,7 +333,7 @@ class generate_eval_report(APIView):
             # 已存在则更新，不存在则创建
             if report_found.count() == 0:  # 尝试创建一条数据
                 
-                # todo 等待llm对齐
+                # todo 等待llm对齐字段
                 # newc_report = Evalreport.objects.create(user_id=userid, evalcontent=content_found[0],
                 #                                         title=report_parts[1], overall=report_parts[2], 
                 #                                         wish=report_parts[3], advice=report_parts[4])
@@ -345,7 +345,7 @@ class generate_eval_report(APIView):
                 
             else:  # 已有该数据, 更新
 
-                # todo 等待llm对齐
+                # todo 等待llm对齐字段
                 report_found.update(title=report_parts[1], overall_1=report_parts[2], 
                                     overall_2=report_parts[3], overall_3=report_parts[4],
                                     advice='TODO',

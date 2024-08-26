@@ -13,11 +13,11 @@ def Integrate_Gem_full(queryset: django.db.models.query.QuerySet):
     def get_gem_pics(gem_id):
         found = GemstonePic.objects.filter(gemstone_id=gem_id)
         if found.count() > 0:
-            print("有")
+            # print("有")
             serializer = GemstonePicSerializer(instance=found, many=True)            
             return serializer.data
         else:
-            print("无")
+            # print("无")
             return None
 
     all_gem = queryset.values()  # 由dict构成的queryset
@@ -59,9 +59,9 @@ def Integrate_Gem_full(queryset: django.db.models.query.QuerySet):
                 },
             ]
             gem_dict[gem_name]['pics'] = get_gem_pics(gid)  # 尝试获取产品摄影
-            print("gem_dict[gem_name]['pics']", gem_dict[gem_name]['pics'])
+            # print("gem_dict[gem_name]['pics']", gem_dict[gem_name]['pics'])
 
-    return gem_dict.values()
+    return gem_dict
 
 
 def Integrate_Gem_lite(queryset: django.db.models.query.QuerySet):
@@ -75,7 +75,6 @@ def Integrate_Gem_lite(queryset: django.db.models.query.QuerySet):
                 # id、position、size、price
     for gem in all_gem:
         gem_name = gem['name']
-        print(gem_name)
         
         if gem_name not in gem_dict:
             gem_dict[gem_name] = gem
@@ -86,24 +85,24 @@ def Integrate_Gem_lite(queryset: django.db.models.query.QuerySet):
             del gem_dict[gem_name]['typ']
             del gem_dict[gem_name]['wuxing']
             del gem_dict[gem_name]['material']
-            del gem_dict[gem_name]['thumbnail']
             del gem_dict[gem_name]['loc']
             del gem_dict[gem_name]['is_recommended']
             del gem_dict[gem_name]['create_time']
             del gem_dict[gem_name]['update_time']
 
-    return gem_dict.values()
+    return gem_dict
 
 
 
 # 获取所有宝石
+# todo Redis
 class get_all_gem(APIView):
     authentication_classes = [MyJWTAuthentication, ]
     def get(self,request,*args,**kwargs):
 
         found = Gemstone.objects.filter()
         # 合并
-        found_integrate = Integrate_Gem_lite(found)
+        found_integrate = Integrate_Gem_lite(found).values()
         # found_integrate = Integrate_Gem_full(found)
 
         if found.count() == 0:
@@ -141,7 +140,7 @@ class get_certain_gem_byname(APIView):
             gem_name = info['name']
             found = Gemstone.objects.filter(name=gem_name)
             # 合并
-            found_integrate = Integrate_Gem_full(found)
+            found_integrate = Integrate_Gem_full(found).values()
             
 
             return Response({'ret': 0, 'data': found_integrate})

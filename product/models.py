@@ -88,13 +88,14 @@ class Gemstone(models.Model):
                                 validators=[MinValueValidator(1)])
     
     is_recommended = models.BooleanField(verbose_name="是否为推荐商品", null=False, blank=False, default=False)
+    inventory = models.IntegerField(verbose_name='库存数量', null=False, blank=False, default=0, validators=[MinValueValidator(0)])
 
     create_time = models.DateTimeField(verbose_name='创建时间', auto_now_add=True, null=True) 
     update_time = models.DateTimeField(verbose_name='修改时间', auto_now=True, null=True)
 
 
     def __str__(self):
-        return self.name
+        return self.name + '_' + self.position + '_' + str(self.size) + 'mm'
     class Meta:
         verbose_name = "珠"
         verbose_name_plural = "珠"
@@ -103,8 +104,8 @@ class Gemstone(models.Model):
 # 手链 模型
 class Bracelet(models.Model):
     Type_choices = [
-        ('单圈', '单圈'),
-        ('双圈', '双圈'),
+        # ('单圈', '单圈'),
+        # ('双圈', '双圈'),
         ('其他', '其他'),
     ]
     Symbol_choices = [
@@ -158,6 +159,7 @@ class Bracelet(models.Model):
                                 validators=[MinValueValidator(1)])
     
     is_recommended = models.BooleanField(verbose_name="是否为推荐商品", null=False, blank=False, default=False)
+    inventory = models.IntegerField(verbose_name='库存数量', null=False, blank=False, default=0, validators=[MinValueValidator(0)])
 
     create_time = models.DateTimeField(verbose_name='创建时间', auto_now_add=True, null=True) 
     update_time = models.DateTimeField(verbose_name='修改时间', auto_now=True, null=True)
@@ -225,6 +227,7 @@ class Stamp(models.Model):
                                 validators=[MinValueValidator(1)])
     
     is_recommended = models.BooleanField(verbose_name="是否为推荐商品", null=False, blank=False, default=False)
+    inventory = models.IntegerField(verbose_name='库存数量', null=False, blank=False, default=0, validators=[MinValueValidator(0)])
 
     create_time = models.DateTimeField(verbose_name='创建时间', auto_now_add=True, null=True) 
     update_time = models.DateTimeField(verbose_name='修改时间', auto_now=True, null=True)

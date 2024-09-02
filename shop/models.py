@@ -5,6 +5,11 @@ from user.models import *
 from product.models import *
 
 
+pattern_gemloc = r'^\d+( \d+)*$'
+Items_Validator_gemloc = RegexValidator(pattern_gemloc, "从顶珠开始顺时针记录, 用数字表示该位置的珠子类型, 空格分隔, 顶珠-1、腰珠-2、子珠-3、配珠-4 \n  \
+                                    例如: 1 2 3 2 3 2 3 2 3 2 3 2 3 2")
+
+
 class Order(models.Model):
     class Status_choices(models.IntegerChoices):
         cancelled = 0, _('已取消')
@@ -15,6 +20,11 @@ class Order(models.Model):
         refund = 5, _('退款/售后中')
         refund_fin = 6, _('完成退款/售后')
 
+    class Package_choices(models.IntegerChoices):
+        no = 0, _('不需要')
+        fres = 1, _('免费提供')
+        paid = 2, _('付费购买')
+
     # STATUS_CHOICES = [
     #     ('cancelled', '已取消'),
     #     ('pending_payment', '待付款'),
@@ -22,12 +32,17 @@ class Order(models.Model):
     #     ('pending_receipt', '待收货'),
     #     ('refund_after_sale', '退款/售后')
     # ]
+    user = models.ForeignKey(verbose_name='用户', to=User, on_delete=models.CASCADE)
 
     order_number = models.CharField(verbose_name='订单号', null=False, max_length=50, unique=True)
-    user = models.ForeignKey(verbose_name='用户', to=User, on_delete=models.CASCADE)
+    
     total_cost = models.DecimalField(verbose_name='总金额', null=False, blank=False, 
                                 max_digits=10, decimal_places=2, validators=[MinValueValidator(1)])
     
+    notes = models.TextField(verbose_name='备注', null=True, blank=True)
+    package = models.IntegerField(verbose_name='包装', null=False, default=0, choices=Package_choices.choices)
+    self_design = models.BooleanField(verbose_name='是否自己设计', null=False, blank=False, default=False)
+
     ordered_dt = models.DateTimeField(verbose_name='下单时间', auto_now_add=True)
     paid_dt = models.DateTimeField(verbose_name='支付时间', null=True, blank=True)
     delivery_dt = models.DateTimeField(verbose_name='发货时间', null=True, blank=True)
@@ -48,29 +63,93 @@ class Order(models.Model):
         verbose_name_plural = "订单"
 
 
+class CartGroupGift(models.Model):
+    user = models.ForeignKey(verbose_name='用户', to=User, on_delete=models.CASCADE)
 
-class Cart(models.Model):
+    gift = models.ForeignKey(verbose_name='挚礼', to=Gift, 
+                                 null=False, blank=False, on_delete=models.PROTECT)
+    
+    # component = models.CharField(verbose_name='组成', max_length=200, null=False, blank=False,
+    #                              validators=[Items_Validator_component])
+    create_time = models.DateTimeField(verbose_name='创建时间', auto_now_add=True, null=True) 
+
+    def __str__(self):
+        return "{}_挚礼: {}".format(self.id, self.gift.name)
+
+    class Meta:
+        verbose_name = "购物车组合-挚礼"
+        verbose_name_plural = "购物车组合-挚礼"
+
+class CartGroupScheme(models.Model):
     Type_choices = [
-        ('挚礼', '挚礼'),
-        ('珠', '珠'),
-        ('手链', '手链'),
+        ('基于模板', '基于模板'),
+        ('随心自选', '随心自选'),
     ]
     user = models.ForeignKey(verbose_name='用户', to=User, on_delete=models.CASCADE)
     
+    name = models.CharField(verbose_name='姓名', max_length=15, null=True, blank=True)
+
     typ = models.CharField(verbose_name='类别', max_length=20, default='挚礼',
                            choices=Type_choices, null=False, blank=False)
-    gemstone = models.ForeignKey(verbose_name='珠', to=Gemstone, 
-                                 null=True, blank=True, on_delete=models.SET_NULL)
-    bracelet = models.ForeignKey(verbose_name='链', to=Bracelet, 
-                                 null=True, blank=True, on_delete=models.SET_NULL)
-    gift = models.ForeignKey(verbose_name='挚礼', to=Gift, 
+
+    scheme = models.ForeignKey(verbose_name='方案', to=Gift, 
                                  null=True, blank=True, on_delete=models.SET_NULL)
     
-    component = models.CharField(verbose_name='组成', max_length=200, null=False, blank=False,
-                                 validators=[Items_Validator_component])
+    # component = models.CharField(verbose_name='组成', max_length=200, null=False, blank=False,
+    #                              validators=[Items_Validator_component])
+    
+    gem_location = models.CharField(verbose_name='珠位置描述',
+                                help_text="从顶珠开始顺时针记录, 用珠id表示该位置是什么珠子, 空格分隔\n  \
+                                    例如: 4 5 7 5 7 5 11 11 11 5 7 5 7 5", 
+                                max_length=200,
+                                validators=[Items_Validator_gemloc],
+                                null=False, blank=False)
+    create_time = models.DateTimeField(verbose_name='创建时间', auto_now_add=True, null=True) 
+
+    def __str__(self):
+        return "{}_方案: {}".format(self.id, self.scheme.name)
+
+    class Meta:
+        verbose_name = "购物车组合-方案"
+        verbose_name_plural = "购物车组合-方案"
+
+
+class Cart(models.Model):
+    product_type_choices = [
+        ('珠', '珠'),
+        ('手链', '手链'),
+        ('印章', '印章'),
+    ]
+    group_type_choices = [
+        ('散件', '散件'),
+        ('挚礼', '挚礼'),
+        ('方案', '方案'),
+    ]
+    user = models.ForeignKey(verbose_name='用户', to=User, on_delete=models.CASCADE)
+    
+    # 购物车表中每条记录对应到基本元件，即珠链章等，不包括组合产品
+    product_type = models.CharField(verbose_name='产品类别', max_length=20, default='珠',
+                           choices=product_type_choices, null=False, blank=False)
+    gemstone = models.ForeignKey(verbose_name='珠', to=Gemstone, 
+                                 null=True, blank=True, on_delete=models.PROTECT)
+    bracelet = models.ForeignKey(verbose_name='链', to=Bracelet, 
+                                 null=True, blank=True, on_delete=models.PROTECT)
+    stamp = models.ForeignKey(verbose_name='印章', to=Stamp, 
+                                 null=True, blank=True, on_delete=models.PROTECT)
+    letter = models.CharField(verbose_name='自定义文字（目前只有印章用的到）', max_length=20,
+                                 null=True, blank=True)
+
+    # 对于组合产品，通过外部的表来管理
+    group_type = models.CharField(verbose_name='组合类型', max_length=20, default='散件',
+                                 choices=group_type_choices, null=False, blank=False)
+    gift_group = models.ForeignKey(verbose_name='挚礼', to=CartGroupGift, 
+                                 null=True, blank=True, on_delete=models.CASCADE)
+    scheme_group = models.ForeignKey(verbose_name='方案', to=CartGroupScheme, 
+                                 null=True, blank=True, on_delete=models.CASCADE)
+    
     quantity = models.IntegerField(verbose_name='数量', null=False, blank=False, validators=[MinValueValidator(0)])
-    cost = models.DecimalField(verbose_name='金额', null=False, blank=False, 
-                                max_digits=10, decimal_places=2, validators=[MinValueValidator(1)])
+    # cost = models.DecimalField(verbose_name='金额', null=False, blank=False, 
+    #                             max_digits=10, decimal_places=2, validators=[MinValueValidator(1)])
 
     # 未下单 -- 作为传统意义的购物车项，删除直接删
     # 已下单 -- 作为订单内容

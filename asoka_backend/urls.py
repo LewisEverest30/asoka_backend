@@ -59,7 +59,10 @@ urlpatterns = [
     path('get_advice', get_advice.as_view()),
     path('get_advice_for_scheme', get_advice_for_scheme.as_view()),
 
-    path('create_cart', create_cart.as_view()),
+    # path('create_cart', create_cart.as_view()),
+    path('create_cart_from_parts', create_cart_from_parts.as_view()),
+    path('create_cart_from_gift', create_cart_from_gift.as_view()),
+    path('create_cart_from_scheme', create_cart_from_scheme.as_view()),
     path('get_all_cart', get_all_cart.as_view()),
     path('update_cart_quantity', update_cart_quantity.as_view()),
     path('delete_cart', delete_cart.as_view()),

@@ -66,7 +66,6 @@ class save_eval_content(APIView):
                                                             question4=question4, wish=wish, bazi=bazi_str,
                                                             update_time=datetime.datetime.now())
             else:
-                # todo 无wish
                 content_found = Evalcontent.objects.filter(user_id=userid, name=name, forself=False)
                 # 已存在则更新，不存在则创建
                 if content_found.count() == 0:  # 尝试创建一条数据

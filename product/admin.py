@@ -29,7 +29,7 @@ class GemstonePicInline(admin.TabularInline):
 
 class GemAdmin(admin.ModelAdmin, ExportExcelMixin):
     list_display = ("id", "name", "thumbnailpic", 'coverpic', 'position', 'size', 'inventory',
-                    'price',)
+                    'price', 'sales')
     exclude = ()
     readonly_fields = ("id", 'create_time', 'update_time')
 
@@ -89,7 +89,7 @@ class BraceletPicInline(admin.TabularInline):
 
 class BraceAdmin(admin.ModelAdmin, ExportExcelMixin):
     list_display = ("id", "name", "thumbnailpic", 'coverpic', 'typ', 'inventory',
-                    'price',)
+                    'price', 'sales')
     exclude = ()
     readonly_fields = ("id", 'create_time', 'update_time')
 
@@ -150,7 +150,7 @@ class StampPicInline(admin.TabularInline):
 
 class StampAdmin(admin.ModelAdmin, ExportExcelMixin):
     list_display = ("id", "name", "thumbnailpic", 'coverpic', 'typ', 'material', 'inventory',
-                    'price',)
+                    'price', 'sales')
     exclude = ()
     readonly_fields = ("id", 'create_time', 'update_time')
 

@@ -9,7 +9,7 @@ from user.auth import MyJWTAuthentication, create_token
 
 
 # todo 按名称整合queryset中的珠
-def Integrate_Gem_full(queryset: django.db.models.query.QuerySet):
+def Integrate_Gem_full(queryset: django.db.models.query.QuerySet) -> dict:
     def get_gem_pics(gem_id):
         found = GemstonePic.objects.filter(gemstone_id=gem_id)
         if found.count() > 0:
@@ -33,7 +33,7 @@ def Integrate_Gem_full(queryset: django.db.models.query.QuerySet):
 
 
         if gem_name in gem_dict:  # 同一个珠已经查到其他尺寸
-            if gem_dict[gem_name]['pics'] is None:
+            if gem_dict[gem_name]['pics'] is None:  # 如果之前没存产品摄影
                 gem_dict[gem_name]['pics'] = get_gem_pics(gem['id'])
             gem_dict[gem_name]['category'].append(
                 {
@@ -41,30 +41,85 @@ def Integrate_Gem_full(queryset: django.db.models.query.QuerySet):
                     'position': gem['position'],
                     'size': gem['size'],
                     'price': gem['price'],
+                    'inventory': gem['inventory'],
+                    'sales': gem['sales'],
  
                 }
             )
+            gem_dict[gem_name]['total_sales'] += gem['sales']  # 累计总销量
+            if gem['price'] < gem_dict[gem_name]['min_price']:   # 尝试更新最低单价
+                gem_dict[gem_name]['min_price'] = gem['price']
+
         else:  # 第一次查到某一个珠
             gem_dict[gem_name] = gem
             position = gem_dict[gem_name].pop('position')
             gid = gem_dict[gem_name].pop('id')
             size = gem_dict[gem_name].pop('size')
             price = gem_dict[gem_name].pop('price')
+            inventory = gem_dict[gem_name].pop('inventory')
+            sales = gem_dict[gem_name].pop('sales')
             gem_dict[gem_name]['category'] = [
                 {
                     'id': gid,
                     'position': position,
                     'size': size,
                     'price': price,
+                    'inventory': inventory,
+                    'sales': sales,
                 },
             ]
+            gem_dict[gem_name]['total_sales'] = sales
+            gem_dict[gem_name]['min_price'] = price
             gem_dict[gem_name]['pics'] = get_gem_pics(gid)  # 尝试获取产品摄影
+            
+            del gem_dict[gem_name]['is_recommended']
+            del gem_dict[gem_name]['create_time']
+            del gem_dict[gem_name]['update_time']
+
             # print("gem_dict[gem_name]['pics']", gem_dict[gem_name]['pics'])
 
     return gem_dict
 
 
-def Integrate_Gem_lite(queryset: django.db.models.query.QuerySet):
+def Integrate_Gem_lite(queryset: django.db.models.query.QuerySet) -> dict:
+    all_gem = queryset.values()  # 由dict构成的queryset
+    
+    gem_dict = {}  
+    # '珠名'：dict
+        # 这类珠子的共同信息字典
+        # 'category': list
+            # 每类的体征信息字典
+                # id、position、size、price
+    for gem in all_gem:
+        gem_name = gem['name']
+        
+        if gem_name not in gem_dict:
+            gem_dict[gem_name] = gem
+            gem_dict[gem_name]['total_sales'] = gem_dict[gem_name].pop('sales')
+            gem_dict[gem_name]['min_price'] = gem_dict[gem_name].pop('price')
+
+            del gem_dict[gem_name]['position']
+            del gem_dict[gem_name]['id']
+            del gem_dict[gem_name]['size']
+            del gem_dict[gem_name]['detail']
+            del gem_dict[gem_name]['typ']
+            del gem_dict[gem_name]['wuxing']
+            del gem_dict[gem_name]['material']
+            del gem_dict[gem_name]['loc']
+            del gem_dict[gem_name]['is_recommended']
+            del gem_dict[gem_name]['create_time']
+            del gem_dict[gem_name]['update_time']
+            del gem_dict[gem_name]['inventory']
+
+        else:
+            gem_dict[gem_name]['total_sales'] += gem['sales']  # 累计总销量
+            if gem['price'] < gem_dict[gem_name]['min_price']:   # 尝试更新最低单价
+                gem_dict[gem_name]['min_price'] = gem['price']
+
+
+    return gem_dict
+
+def Integrate_Gem_mini(queryset: django.db.models.query.QuerySet) -> dict:
     all_gem = queryset.values()  # 由dict构成的queryset
     
     gem_dict = {}  
@@ -89,13 +144,53 @@ def Integrate_Gem_lite(queryset: django.db.models.query.QuerySet):
             del gem_dict[gem_name]['is_recommended']
             del gem_dict[gem_name]['create_time']
             del gem_dict[gem_name]['update_time']
+            del gem_dict[gem_name]['symbol']
+            del gem_dict[gem_name]['price']
+            del gem_dict[gem_name]['intro']
+            del gem_dict[gem_name]['inventory']
+            del gem_dict[gem_name]['sales']
 
     return gem_dict
 
 
+# -------------------------------------------------------------------
+# 获取宝石的所有类别
+# todo Redis
+class get_gem_types(APIView):
+    authentication_classes = [MyJWTAuthentication, ]
+    def get(self,request,*args,**kwargs):
+        # 全部
+        result_list = []
+        found_all = Gemstone.objects.filter().order_by('-is_recommended', '-create_time')
+        found_all_integrate = Integrate_Gem_mini(found_all).values()    # 合并
+        result_list.append({
+            'type': '全部',
+            # gem_list 返回前三个
+            'gem_list': found_all_integrate if len(found_all_integrate) <=3 else found_all_integrate[:3]
+        })
+
+        # 其他各个类
+        for choice in Gemstone.Pos_choices[:-1]:
+            found = Gemstone.objects.filter(position=choice[0]).order_by('-is_recommended', '-create_time')
+            found_integrate = Integrate_Gem_mini(found).values()    # 合并
+            result_list.append({
+                'type': choice[0],
+                # gem_list 返回前三个
+                'gem_list': found_integrate if len(found_integrate) <=3 else found_integrate[:3]
+            })
+
+
+        if found.count() == 0:
+            return Response({'ret': 40701, 'data': None})
+        else:
+            # serializer = GemstoneSerializer1(instance=found, many=True)
+            # return Response({'ret': 0, 'data': list(serializer.data)})
+            return Response({'ret': 0, 'data': result_list})
+
 
 # 获取所有宝石
 # todo Redis
+'''
 class get_all_gem(APIView):
     authentication_classes = [MyJWTAuthentication, ]
     def get(self,request,*args,**kwargs):
@@ -111,8 +206,32 @@ class get_all_gem(APIView):
             # serializer = GemstoneSerializer1(instance=found, many=True)
             # return Response({'ret': 0, 'data': list(serializer.data)})
             return Response({'ret': 0, 'data': found_integrate})
+'''
+            
+# 获取某类的宝石
+class get_gem_by_type(APIView):
+    authentication_classes = [MyJWTAuthentication, ]
+    def post(self,request,*args,**kwargs):
+        info = json.loads(request.body)
+        try:
+            typ = info['type']
+            if typ == '全部':
+                found = Gemstone.objects.filter()
+            elif typ not in [t[0] for t in Gemstone.Pos_choices[:-1]]:
+                return Response({'ret': 40803, 'errmsg': '不存在的type', 'data': None})             
+            else:
+                found = Gemstone.objects.filter(position=typ)
+            found_integrate = Integrate_Gem_lite(found).values()
+            if len(found_integrate) == 0:
+                return Response({'ret': 40802, 'errmsg': '无该type的商品', 'data': found_integrate})
+            return Response({'ret': 0, 'errmsg': None, 'data': found_integrate})
+        except Exception as e:
+            print(repr(e))
+            return Response({'ret': 40801, 'errmsg': '其他错误', 'data': None})
+
 
 # 通过id获取具体的某个宝石
+'''
 class get_certain_gem(APIView):
     authentication_classes = [MyJWTAuthentication, ]
     def post(self,request,*args,**kwargs):
@@ -129,8 +248,12 @@ class get_certain_gem(APIView):
             print(repr(e))
             return Response({'ret': -1, 'data':None})   
 
-# 通过name获取某个宝石(合并不同的尺寸后
-class get_certain_gem_byname(APIView):
+'''
+
+
+# 通过name和type获取某个宝石(合并不同的尺寸后
+# todo
+class get_certain_gem_by_name_type(APIView):
     authentication_classes = [MyJWTAuthentication, ]
     def post(self,request,*args,**kwargs):
         userid = request.user['userid']
@@ -138,10 +261,10 @@ class get_certain_gem_byname(APIView):
 
         try:
             gem_name = info['name']
-            found = Gemstone.objects.filter(name=gem_name)
-            # 合并
-            found_integrate = Integrate_Gem_full(found).values()
-            
+            gem_pos = info['type']
+            found = Gemstone.objects.filter(name=gem_name, position=gem_pos)
+
+            found_integrate = Integrate_Gem_full(found).values()            
 
             return Response({'ret': 0, 'data': found_integrate})
 
@@ -150,7 +273,7 @@ class get_certain_gem_byname(APIView):
             return Response({'ret': -1, 'data':None})   
 
 
-
+# -------------------------------------------------------------------
 # 获取所有手链
 class get_all_bracelet(APIView):
     authentication_classes = [MyJWTAuthentication, ]
@@ -181,6 +304,8 @@ class get_certain_bracelet(APIView):
             return Response({'ret': -1, 'data':None})   
 
 
+# -------------------------------------------------------------------
+
 class get_all_stamp(APIView):
     authentication_classes = [MyJWTAuthentication, ]
     def get(self,request,*args,**kwargs):
@@ -209,6 +334,7 @@ class get_certain_stamp(APIView):
             return Response({'ret': -1, 'data':None})   
 
 
+# -------------------------------------------------------------------
 # 获取所有挚礼
 class get_all_gift(APIView):
     authentication_classes = [MyJWTAuthentication, ]
@@ -255,6 +381,8 @@ class get_certain_gift(APIView):
             return Response({'ret': -1, 'data':None})  
 
 
+# -------------------------------------------------------------------
+
 # 获取推荐商品
 class get_recommended_product(APIView):
     authentication_classes = [MyJWTAuthentication, ]
@@ -286,6 +414,9 @@ class get_recommended_product(APIView):
         #     serializer = GiftSerializer1(instance=found, many=True)
         #     return Response({'ret': 0, 'data': list(serializer.data)})
 
+
+
+# -------------------------------------------------------------------
 
 # 获取所有模版
 class get_all_scheme_template(APIView):

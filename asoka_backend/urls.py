@@ -43,9 +43,12 @@ urlpatterns = [
     path('get_all_eval_report', get_all_eval_report.as_view()),
     path('get_certain_eval_report', get_certain_eval_report.as_view()),
 
-    path('get_all_gem', get_all_gem.as_view()),
-    path('get_certain_gem', get_certain_gem.as_view()),
-    path('get_certain_gem_byname', get_certain_gem_byname.as_view()),
+
+    path('get_gem_types', get_gem_types.as_view()),
+    path('get_gem_by_type', get_gem_by_type.as_view()),
+    # path('get_all_gem', get_all_gem.as_view()),
+    # path('get_certain_gem', get_certain_gem.as_view()),
+    path('get_certain_gem_by_name_type', get_certain_gem_by_name_type.as_view()),
     path('get_all_bracelet', get_all_bracelet.as_view()),
     path('get_certain_bracelet', get_certain_bracelet.as_view()),
     path('get_all_gift', get_all_gift.as_view()),
@@ -66,7 +69,7 @@ urlpatterns = [
     path('get_all_cart', get_all_cart.as_view()),
     path('update_cart_quantity', update_cart_quantity.as_view()),
     path('delete_cart', delete_cart.as_view()),
-    path('clear_cart', clear_cart.as_view()),
+    # path('clear_cart', clear_cart.as_view()),
 
     path('create_address', create_address.as_view()),
     path('get_all_address', get_all_address.as_view()),

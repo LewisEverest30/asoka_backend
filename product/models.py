@@ -55,7 +55,7 @@ class Gemstone(models.Model):
 
     name = models.CharField(verbose_name='名称', max_length=20, null=False, blank=False, db_index=True)
     typ = models.CharField(verbose_name='类别', max_length=20, 
-                           choices=Type_choices, null=False, blank=False)
+                           choices=Type_choices, null=True, blank=True)
     
     symbol = models.CharField(verbose_name='寓意', max_length=50, 
                         #    choices=Symbol_choices, 
@@ -73,7 +73,9 @@ class Gemstone(models.Model):
     position = models.CharField(verbose_name='位置', max_length=20, 
                            choices=Pos_choices, 
                            null=True, blank=False)
-    size = models.IntegerField(verbose_name='尺寸（单位：毫米）', null=True, blank=True, validators=[MinValueValidator(0)])
+    size = models.IntegerField(verbose_name='尺寸', 
+                               help_text='（单位：毫米）',
+                               null=True, blank=True, validators=[MinValueValidator(0)])
 
     cover = models.ImageField(verbose_name='封面图片（其他图片在下方产品摄影里添加）', null=True, blank=False,
                             upload_to='gemstone/')
@@ -89,6 +91,7 @@ class Gemstone(models.Model):
     
     is_recommended = models.BooleanField(verbose_name="是否为推荐商品", null=False, blank=False, default=False)
     inventory = models.IntegerField(verbose_name='库存数量', null=False, blank=False, default=0, validators=[MinValueValidator(0)])
+    sales = models.IntegerField(verbose_name='销量', default=0, null=False, blank=False, validators=[MinValueValidator(0)])
 
     create_time = models.DateTimeField(verbose_name='创建时间', auto_now_add=True, null=True) 
     update_time = models.DateTimeField(verbose_name='修改时间', auto_now=True, null=True)
@@ -160,6 +163,7 @@ class Bracelet(models.Model):
     
     is_recommended = models.BooleanField(verbose_name="是否为推荐商品", null=False, blank=False, default=False)
     inventory = models.IntegerField(verbose_name='库存数量', null=False, blank=False, default=0, validators=[MinValueValidator(0)])
+    sales = models.IntegerField(verbose_name='销量', default=0, null=False, blank=False, validators=[MinValueValidator(0)])
 
     create_time = models.DateTimeField(verbose_name='创建时间', auto_now_add=True, null=True) 
     update_time = models.DateTimeField(verbose_name='修改时间', auto_now=True, null=True)
@@ -228,6 +232,7 @@ class Stamp(models.Model):
     
     is_recommended = models.BooleanField(verbose_name="是否为推荐商品", null=False, blank=False, default=False)
     inventory = models.IntegerField(verbose_name='库存数量', null=False, blank=False, default=0, validators=[MinValueValidator(0)])
+    sales = models.IntegerField(verbose_name='销量', default=0, null=False, blank=False, validators=[MinValueValidator(0)])
 
     create_time = models.DateTimeField(verbose_name='创建时间', auto_now_add=True, null=True) 
     update_time = models.DateTimeField(verbose_name='修改时间', auto_now=True, null=True)
@@ -257,7 +262,7 @@ class Gift(models.Model):
         ('火', '火'),
         ('土', '土'),
     ]
-    
+
 
     name = models.CharField(verbose_name='名称', max_length=20, null=False, blank=False)
     
@@ -298,8 +303,6 @@ class Gift(models.Model):
     class Meta:
         verbose_name = "挚礼"
         verbose_name_plural = "挚礼"
-
-
 
 
 # 方案模板 模型

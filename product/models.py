@@ -1,3 +1,4 @@
+import re
 from django.db import models
 from django.core.validators import MinValueValidator, RegexValidator
 from django.utils.translation import gettext_lazy as _
@@ -5,7 +6,7 @@ from rest_framework import serializers
 from user.models import *
 
 # pattern_component = r'^(\d+\*[^\|\*]+\|)*(\d+\*[^\|\*]+)$'
-pattern_component = r'^(\d+\*(珠|手链)\-\d+ )*(\d+\*(珠|手链)\-\d+)$'
+pattern_component = r'^(\d+\*(珠|手链|印章)\-\d+ )*(\d+\*(珠|手链|印章)\-\d+)$'
 # Items_Validator_component = RegexValidator(pattern_component, '请用这样的格式来表示产品的组成: 3*塑料石|2*蓝宝石|1*玉髓手环')
 Items_Validator_component = RegexValidator(pattern_component, '请用这样的格式来表示产品的组成: 个数*珠/手链-id 个数*珠/手链-id。例如: 3*珠-1 2*珠-2 1*手链-1')
 
@@ -17,6 +18,7 @@ pattern_structure = r'^(1|2|3|4)( (1|2|3|4))*$'
 Items_Validator_structure = RegexValidator(pattern_structure, "从顶珠开始顺时针记录, 用数字表示该位置的珠子类型, 空格分隔, 顶珠-1、腰珠-2、子珠-3、配珠-4 \n  \
                                     例如: 1 2 3 2 3 2 3 2 3 2 3 2 3 2")
 
+pattern_component_match = r'(\d+)\*(珠|手链|印章)\-(\d+)'
 
 
 # 珠 模型
@@ -25,14 +27,14 @@ class Gemstone(models.Model):
         ('宝石', '宝石'),
         ('其他', '其他'),
     ]    
-    Symbol_choices = [
-        ('财运', '财运'),
-        ('姻缘', '姻缘'),
-        ('健康', '健康'),
-        ('学业', '学业'),
-        ('事业', '事业'),
-        ('好运', '好运'),
-    ]
+    # Symbol_choices = [
+    #     ('财运', '财运'),
+    #     ('姻缘', '姻缘'),
+    #     ('健康', '健康'),
+    #     ('学业', '学业'),
+    #     ('事业', '事业'),
+    #     ('好运', '好运'),
+    # ]
     Mat_choices = [
         ('玛瑙', '玛瑙'),
         ('其他', '其他'),
@@ -111,14 +113,14 @@ class Bracelet(models.Model):
         # ('双圈', '双圈'),
         ('其他', '其他'),
     ]
-    Symbol_choices = [
-        ('财运', '财运'),
-        ('姻缘', '姻缘'),
-        ('健康', '健康'),
-        ('学业', '学业'),
-        ('事业', '事业'),
-        ('好运', '好运'),
-    ]
+    # Symbol_choices = [
+    #     ('财运', '财运'),
+    #     ('姻缘', '姻缘'),
+    #     ('健康', '健康'),
+    #     ('学业', '学业'),
+    #     ('事业', '事业'),
+    #     ('好运', '好运'),
+    # ]
     Mat_choices = [
         ('玛瑙', '玛瑙'),
         ('其他', '其他'),
@@ -181,14 +183,14 @@ class Stamp(models.Model):
     Type_choices = [
         ('其他', '其他'),
     ]
-    Symbol_choices = [
-        ('财运', '财运'),
-        ('姻缘', '姻缘'),
-        ('健康', '健康'),
-        ('学业', '学业'),
-        ('事业', '事业'),
-        ('好运', '好运'),
-    ]
+    # Symbol_choices = [
+    #     ('财运', '财运'),
+    #     ('姻缘', '姻缘'),
+    #     ('健康', '健康'),
+    #     ('学业', '学业'),
+    #     ('事业', '事业'),
+    #     ('好运', '好运'),
+    # ]
     Wu_choices = [
         ('金', '金'),
         ('木', '木'),
@@ -253,7 +255,9 @@ class Gift(models.Model):
         ('健康', '健康'),
         ('学业', '学业'),
         ('事业', '事业'),
-        ('好运', '好运'),
+        ('转运', '转运'),
+        ('平安', '平安'),
+        ('解忧', '解忧'),
     ]
     Wu_choices = [
         ('金', '金'),
@@ -461,7 +465,7 @@ class BraceletSerializer1(serializers.ModelSerializer):
     type = serializers.CharField(source='typ')
     class Meta:
         model = Bracelet
-        fields = ['id', 'name', 'type', 'symbol', 'thumbnail', 'cover', 'intro', 'price']
+        fields = ['id', 'name', 'type', 'symbol', 'cover', 'price', 'sales', 'inventory']
         # exclude = ['user', 'evalcontent']
 
 class BraceletSerializer2(serializers.ModelSerializer):
@@ -490,13 +494,20 @@ class BraceletSerializer3(serializers.ModelSerializer):
         model = Bracelet
         fields = ['product_type', 'id', 'name', 'cover', 'intro', 'price']
 
+class BraceletSerializer_mini(serializers.ModelSerializer):
+    class Meta:
+        model = Bracelet
+        fields = ['id', 'name', 'cover',]
+        # exclude = ['user', 'evalcontent']
 
+
+# ----------------------------------------------------------------
 # 印章 序列化器
 class StampSerializer1(serializers.ModelSerializer):
     type = serializers.CharField(source='typ')
     class Meta:
         model = Stamp
-        fields = ['id', 'name', 'type', 'symbol', 'thumbnail', 'cover', 'intro', 'price']
+        fields = ['id', 'name', 'type', 'symbol', 'cover', 'price', 'sales', 'inventory']
         # exclude = ['user', 'evalcontent']
 
 class StampSerializer2(serializers.ModelSerializer):
@@ -525,6 +536,12 @@ class StampSerializer3(serializers.ModelSerializer):
         model = Stamp
         fields = ['product_type', 'id', 'name', 'cover', 'intro', 'price']
 
+class StampSerializer_mini(serializers.ModelSerializer):
+    class Meta:
+        model = Stamp
+        fields = ['id', 'name', 'cover',]
+        # exclude = ['user', 'evalcontent']
+
 
 # 挚礼 序列化器
 class GiftSerializer1(serializers.ModelSerializer):
@@ -535,7 +552,8 @@ class GiftSerializer1(serializers.ModelSerializer):
 
 class GiftSerializer2(serializers.ModelSerializer):
     pics = serializers.SerializerMethodField()
-    
+    components = serializers.SerializerMethodField()
+  
     def get_pics(self, obj):
         found = GiftPic.objects.filter(gift_id=obj.id)
         if found.count() > 0:
@@ -544,10 +562,38 @@ class GiftSerializer2(serializers.ModelSerializer):
         else:
             return None
 
+    def get_components(self, obj):
+        raw_component = obj.component
+        matches = re.findall(pattern_component_match, raw_component)
+        
+        component_list = []
+        for match in matches:
+            product_dict = {
+                'quantity': int(match[0]),
+                'product_type': match[1],
+                'product_id': int(match[2]),
+            }
+            if product_dict['product_type'] == '珠':
+                product = Gemstone.objects.get(id=product_dict['product_id'])
+            elif product_dict['product_type'] == '手链':
+                product = Bracelet.objects.get(id=product_dict['product_id'])
+            elif product_dict['product_type'] == '印章':
+                product = Stamp.objects.get(id=product_dict['product_id'])
+            else:
+                continue
+            product_dict['product_name'] = product.name
+            product_dict['thumbnail'] = str(product.thumbnail)
+            product_dict['loc'] = product.loc
+            product_dict['intro'] = product.intro
+            product_dict['price'] = product.price
+            
+            component_list.append(product_dict)
+        return component_list
+
     class Meta:
         model = Gift
         # fields = '__all__'
-        exclude = ['create_time', 'update_time']
+        exclude = ['create_time', 'update_time', 'component']
 
 class GiftSerializer3(serializers.ModelSerializer):
     product_type = serializers.SerializerMethodField()
@@ -558,6 +604,12 @@ class GiftSerializer3(serializers.ModelSerializer):
     class Meta:
         model = Gift
         fields = ['product_type', 'id', 'name', 'cover', 'intro', 'price']
+
+class GiftSerializer_mini(serializers.ModelSerializer):
+    class Meta:
+        model = Gift
+        fields = ['id', 'name', 'cover',]
+        # exclude = ['user', 'evalcontent']
 
 
 

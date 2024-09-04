@@ -236,16 +236,28 @@ class continue_chat(APIView):
 
 class get_chat_history(APIView):
     authentication_classes = [MyJWTAuthentication, ]
+    def get_report(self, userid):
+        try:
+            report = Evalreport.objects.get(user_id=userid, evalcontent__forself=True)
+            serializer = EvalreportSerializer2(instance=report, many=False)
+            return serializer.data
+        except Exception as e:
+            print(repr(e))
+            return None
+
     def get(self,request,*args,**kwargs):
         userid = request.user['userid']
 
         his_found = Chathistory.objects.filter(user_id=userid).order_by('create_time')
         if his_found.count() == 0:
             # 没有聊天记录
-            return Response({'ret': -1, 'data': None})
+            return Response({'ret': 44101, 'errmsg': '无聊天记录', 'data': None, 'report': None})
         else:
+            report = self.get_report(userid)
             serializer = ChathistorySerializer(instance=his_found, many=True)
-            return Response({'ret': 0, 'data': list(serializer.data)})
+            if report is None:
+                return Response({'ret': 44102, 'errmsg': '有聊天记录，但未生成测评报告', 'data': list(serializer.data), 'report':None})
+            return Response({'ret': 0, 'errmsg': None, 'data': list(serializer.data), 'report':report})
 
 
 class clear_chat_history(APIView):

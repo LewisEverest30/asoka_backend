@@ -151,40 +151,6 @@ class EvalcontentSerializer(serializers.ModelSerializer):
 
 
 
-
-class Chathistory(models.Model):
-    
-    class Talker_choices(models.IntegerChoices):
-        llm = 0, _('大模型')
-        user = 1, _('用户')
-
-    user = models.ForeignKey(verbose_name='用户', to=User, on_delete=models.CASCADE)
-    talker = models.IntegerField(verbose_name='说话人', choices=Talker_choices.choices, null=False)
-    msg = models.CharField(verbose_name='信息', max_length=3000, null=False)
-    create_time = models.DateTimeField(verbose_name='创建时间', auto_now_add=True) 
-
-
-    def __str__(self) -> str:
-        return self.user.name + '_' + str(self.create_time)
-
-    class Meta:
-        verbose_name = "大模型对话记录"
-        verbose_name_plural = "大模型对话记录"
-
-
-class ChathistorySerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Chathistory
-        # fields = '__all__'
-        fields = ['talker', 'msg', 'create_time']
-
-
-
-
-
-
-
-
 class Evalreport(models.Model):
     
     class Gender_choices(models.IntegerChoices):
@@ -244,3 +210,39 @@ class EvalreportSerializer2(serializers.ModelSerializer):
         model = Evalreport
         # fields = '__all__'
         exclude = ['user', 'evalcontent']
+
+
+
+
+
+class Chathistory(models.Model):
+    
+    class Talker_choices(models.IntegerChoices):
+        llm = 0, _('大模型')
+        user = 1, _('用户')
+
+    user = models.ForeignKey(verbose_name='用户', to=User, on_delete=models.CASCADE)
+    talker = models.IntegerField(verbose_name='说话人', choices=Talker_choices.choices, null=False)
+    msg = models.CharField(verbose_name='信息', max_length=3000, null=False)
+    create_time = models.DateTimeField(verbose_name='创建时间', auto_now_add=True) 
+
+
+    def __str__(self) -> str:
+        return self.user.name + '_' + str(self.create_time)
+
+    class Meta:
+        verbose_name = "大模型对话记录"
+        verbose_name_plural = "大模型对话记录"
+
+
+class ChathistorySerializer(serializers.ModelSerializer):
+    type = serializers.SerializerMethodField()
+
+    def get_type(self, obj):
+        return 0
+    
+    class Meta:
+        model = Chathistory
+        # fields = '__all__'
+        fields = ['talker', 'msg', 'create_time', 'type']
+

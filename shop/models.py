@@ -20,10 +20,17 @@ class Order(models.Model):
         refund = 5, _('退款/售后中')
         refund_fin = 6, _('完成退款/售后')
 
-    class Package_choices(models.IntegerChoices):
-        no = 0, _('不需要')
-        fres = 1, _('免费提供')
-        paid = 2, _('付费购买')
+    # class Package_choices(models.IntegerChoices):
+    #     no = 0, _('不需要')
+    #     fres = 1, _('免费提供')
+    #     paid = 2, _('付费购买')
+
+    Package_choices = [
+        ('不需要', '不需要'),
+        ('免费提供', '免费提供'),
+        ('付费购买', '付费购买'),
+    ]
+
 
     # STATUS_CHOICES = [
     #     ('cancelled', '已取消'),
@@ -40,7 +47,10 @@ class Order(models.Model):
                                 max_digits=10, decimal_places=2, validators=[MinValueValidator(1)])
     
     notes = models.TextField(verbose_name='备注', null=True, blank=True)
-    package = models.IntegerField(verbose_name='包装', null=False, default=0, choices=Package_choices.choices)
+    package = models.CharField(verbose_name='包装', null=False, 
+                               default='不需要', 
+                               choices=Package_choices,
+                               max_length=10)
     self_design = models.BooleanField(verbose_name='是否自己设计', null=False, blank=False, default=False)
 
     ordered_dt = models.DateTimeField(verbose_name='下单时间', auto_now_add=True)
@@ -231,9 +241,12 @@ class OrderSerializer1(serializers.ModelSerializer):
         return sta_choices[int(obj.status)]
     
     def get_items(self, obj):
+        from .utils import Group_Carts_lite
         cart_found = Cart.objects.filter(order_id=obj.id)
-        serializer = CartSerializer(instance=cart_found, many=True)            
-        return list(serializer.data)
+        # serializer = CartSerializer(instance=cart_found, many=True)            
+        group_carts_dict = Group_Carts_lite(cart_found)
+        
+        return list(group_carts_dict.values())
     
     class Meta:
         model = Order
@@ -252,9 +265,12 @@ class OrderSerializer2(serializers.ModelSerializer):
         return sta_choices[int(obj.status)]
     
     def get_items(self, obj):
+        from .utils import Group_Carts_lite
         cart_found = Cart.objects.filter(order_id=obj.id)
-        serializer = CartSerializer(instance=cart_found, many=True)            
-        return list(serializer.data)
+        # serializer = CartSerializer(instance=cart_found, many=True)            
+        group_carts_dict = Group_Carts_lite(cart_found)
+        
+        return list(group_carts_dict.values())
     
     class Meta:
         model = Order

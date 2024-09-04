@@ -60,7 +60,7 @@ class OrderAdmin(admin.ModelAdmin, ExportExcelMixin):
     list_display = ("id", "user", 'order_number', 'status',
                     'recipient', 'tracking_number', 'total_cost')
     exclude = ()
-    readonly_fields = ("id", "user", 'order_number',
+    readonly_fields = ("id", "user", 'order_number', 'notes', 'package', 'self_design',
                     'recipient', 'detailed_address', 'total_cost',
                     'ordered_dt', 'paid_dt', 'phone')
 

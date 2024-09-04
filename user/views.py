@@ -8,7 +8,7 @@ from django.db.models import Case, When, F
 
 from .models import *
 from product.models import *
-from product.views import Integrate_Gem_lite
+from product.views import Integrate_Gem_lite_for_advice
 from .auth import MyJWTAuthentication, create_token
 
 
@@ -162,7 +162,7 @@ class get_advice(APIView):
                 return Response({'ret': 4051, 'errmsg': '不存在的人名', 'advice':None})
 
             gem_all = Gemstone.objects.all()
-            gem_integrate_dict = Integrate_Gem_lite(gem_all)
+            gem_integrate_dict = Integrate_Gem_lite_for_advice(gem_all)
 
             for adv in advice:
                 # 添加缩略图和symbol

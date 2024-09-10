@@ -421,9 +421,10 @@ class get_certain_eval_report(APIView):
         info = json.loads(request.body)
 
         try:
-            report_id = info['id']
-            report_found = Evalreport.objects.get(id=report_id)
-            serializer = EvalreportSerializer2(instance=report_found, many=False)
+            # report_id = info['id']
+            name = info['name']
+            report_found = Evalreport.objects.filter(evalcontent__name=name)
+            serializer = EvalreportSerializer2(instance=report_found[0], many=False)
             return Response({'ret': 0, 'data': serializer.data})
 
         except Exception as e:

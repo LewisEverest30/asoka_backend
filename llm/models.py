@@ -5,7 +5,7 @@ from django.conf import settings
 
 from user.models import User
 
-
+# ftodo pic地址可能需要调整？？
 REPORT_INFO_DIC = {
     "祖母绿": {
         "enname": "Emerald",
@@ -167,7 +167,7 @@ class Evalreport(models.Model):
     overall_2 = models.CharField(verbose_name='整体解读-关键词2', max_length=2000, null=False, default="......")
     overall_3 = models.CharField(verbose_name='整体解读-关键词3', max_length=2000, null=False, default="......")
 
-    advice = models.CharField(verbose_name='建议', max_length=1000, null=False)
+    advice = models.CharField(verbose_name='建议', max_length=1000, null=True)
 
     create_time = models.DateTimeField(verbose_name='创建时间', auto_now_add=True) 
     update_time = models.DateTimeField(verbose_name='修改时间', auto_now=True)

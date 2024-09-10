@@ -8,7 +8,7 @@ from llm.models import *
 from user.auth import MyJWTAuthentication, create_token
 
 
-# todo 按名称整合queryset中的珠
+# 按名称整合queryset中的珠
 def Integrate_Gem_full(queryset: django.db.models.query.QuerySet) -> dict:
     def get_gem_pics(gem_id):
         found = GemstonePic.objects.filter(gemstone_id=gem_id)

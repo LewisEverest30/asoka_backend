@@ -245,7 +245,6 @@ class clear_cart(APIView):
 ###############################################################################
 
 # 获取用户的所有订单(不包括已取消的订单
-# todo
 class get_order_by_type(APIView):
     authentication_classes = [MyJWTAuthentication, ]
     def post(self,request,*args,**kwargs):
@@ -275,7 +274,6 @@ class get_order_by_type(APIView):
 
 
 # 获取某个订单具体信息
-# todo
 class get_certain_order_by_id(APIView):
     authentication_classes = [MyJWTAuthentication, ]
     def post(self,request,*args,**kwargs):
@@ -325,7 +323,7 @@ class create_order(APIView):
 
             carts_found = Cart.objects.filter(user__id=userid, id__in=idlist)
 
-            # todo 库存检查 and 更新
+            # 库存检查 and 更新
             try:
                 Check_Update_Inventory(carts_found)
             except ValueError as e:

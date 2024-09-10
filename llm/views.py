@@ -12,6 +12,7 @@ from volcenginesdkarkruntime import Ark
 
 from bazi.lunar import Lunar
 
+# ftodo mbti
 class save_eval_content(APIView):
     authentication_classes = [MyJWTAuthentication, ]
     def post(self,request,*args,**kwargs):
@@ -83,9 +84,28 @@ class save_eval_content(APIView):
 
         # 为自己测，将测评数据同步到个人信息
         if forself==True:
+            mbti = ''
+            if question1 == 1:
+                mbti += 'E'
+            else:
+                mbti += 'I'
+            if question2 == 1:
+                mbti += 'S'
+            else:
+                mbti += 'N'
+            if question3 == 1:
+                mbti += 'T'
+            else:
+                mbti += 'F'
+            if question4 == 1:
+                mbti += 'P'
+            else:
+                mbti += 'J'
+
             User.objects.filter(id=userid).update(name=name, gender=gender, birthdt=birthdt,
                                                 birthloc=birthloc, liveloc=liveloc,
-                                                job=job, belief=belief, update_time=datetime.datetime.now())
+                                                job=job, belief=belief, mbti=mbti,
+                                                update_time=datetime.datetime.now())
                 
         return Response({'ret': 0, 'errmsg': None})
 
@@ -294,10 +314,18 @@ class generate_eval_report(APIView):
         info = json.loads(request.body)
         try:
             name = info['name']
-            # 先检查对应的测评内容是否记录下来了
+            # 检查对应的测评内容是否记录下来了
             content_found = Evalcontent.objects.filter(user_id=userid, name=name)
             if content_found.count() == 0:
                 return Response({'ret': 3, 'errmsg':'对应的的测评内容未被记录', 'data':None})
+
+            # 获取MBTI
+            try:
+                mbti = User.objects.get(id=userid).mbti
+            except Exception as e:
+                print(repr(e))
+                return Response({'ret': 13, 'errmsg': '获取MBTI失败', 'data':None})
+
 
             # 获取测评内容
             try:
@@ -313,17 +341,17 @@ class generate_eval_report(APIView):
                 if int(char) == 1:
                     wish += wish_list[i]
                     wish += ' '
+            
             eval_dict = {
-                "姓名": content_found[0].name,
                 "生日": f"{content_found[0].birthdt.year}年{content_found[0].birthdt.month}月{content_found[0].birthdt.day}日{content_found[0].birthdt.hour}时{content_found[0].birthdt.minute}分",
                 "八字": bazi_dic["八字"],
                 "性别": bazi_dic["性别"],
                 "纳音": bazi_dic["纳音"],
-                "愿望": wish,
+                "MBTI": mbti,
             }
-            print(eval_dict)
+            # print(eval_dict)
 
-            # 将八字信息作为第一条发给gpt
+            # 将eval_dict信息作为第一条发给gpt
             new_msgs = [{"role": "system", "content": settings.EVALREPORT_PROMPT}, ]
             new_msgs.append({"role": "user", "content": str(eval_dict)})
             
@@ -335,31 +363,33 @@ class generate_eval_report(APIView):
                 print(repr(e))
                 return Response({'ret': 7, 'errmsg': '大模型故障', 'data':None})
 
-
-            parts = llm_result['content'].split('###')[1:]  # 测评报告的各个部分
+            # 从llm输出中提取报告内容
+            print(llm_result['content'])
+            parts = llm_result['content'].split('###')  # 测评报告的各个部分
+            gem = parts[0].strip()[5:-1]
             report_parts = []
-            for s in parts:
-                report_parts.append(s.strip())
+            for s in parts[1:]:
+                report_parts.append(s.strip()[17:])
 
             report_found = Evalreport.objects.filter(user_id=userid, evalcontent__name=name)
             # 已存在则更新，不存在则创建
             if report_found.count() == 0:  # 尝试创建一条数据
                 
-                # todo 等待llm对齐字段
+                # todo 等待llm对齐字段advice
                 # newc_report = Evalreport.objects.create(user_id=userid, evalcontent=content_found[0],
                 #                                         title=report_parts[1], overall=report_parts[2], 
                 #                                         wish=report_parts[3], advice=report_parts[4])
                 newc_report = Evalreport.objects.create(user_id=userid, evalcontent=content_found[0],
-                                                        title=report_parts[1], overall_1=report_parts[2], 
-                                                        overall_2=report_parts[3], overall_3=report_parts[4],
+                                                        title=gem, overall_1=report_parts[0], 
+                                                        overall_2=report_parts[1], overall_3=report_parts[2],
                                                         advice='TODO')
                 serializer = EvalreportSerializer2(instance=newc_report, many=False)
                 
             else:  # 已有该数据, 更新
 
-                # todo 等待llm对齐字段
-                report_found.update(title=report_parts[1], overall_1=report_parts[2], 
-                                    overall_2=report_parts[3], overall_3=report_parts[4],
+                # todo 等待llm对齐字段advice
+                report_found.update(title=gem, overall_1=report_parts[0], 
+                                    overall_2=report_parts[1], overall_3=report_parts[2],
                                     advice='TODO',
                                     update_time=datetime.datetime.now())
                 

@@ -5,7 +5,22 @@ from django.conf import settings
 
 from user.models import User
 
-# ftodo pic地址可能需要调整？？
+
+
+def decode_wish(wish):
+    all_wish_list = ['事业', '学业', '财富', '爱情', '健康', '安全', '家庭', '快乐', '万事顺意']
+    wish_list = ['' for _ in range(3)]
+    wish_list_index = 0
+    for i, char in enumerate(wish):
+        if int(char) == 1:
+            # wish += all_wish_list[i]
+            # wish += ' '
+            wish_list[wish_list_index] = all_wish_list[i]
+            wish_list_index += 1
+    return wish_list
+
+
+# todo-f pic地址可能需要调整？？
 REPORT_INFO_DIC = {
     "祖母绿": {
         "enname": "Emerald",
@@ -136,7 +151,7 @@ class Evalcontent(models.Model):
     class Meta:
         verbose_name = "测评内容"
         verbose_name_plural = "测评内容"
-        unique_together = (("user", "name"),)
+        unique_together = (("user", "name", "forself"),)
 
 
 class EvalcontentSerializer(serializers.ModelSerializer):
@@ -167,7 +182,11 @@ class Evalreport(models.Model):
     overall_2 = models.CharField(verbose_name='整体解读-关键词2', max_length=2000, null=False, default="......")
     overall_3 = models.CharField(verbose_name='整体解读-关键词3', max_length=2000, null=False, default="......")
 
-    advice = models.CharField(verbose_name='建议', max_length=1000, null=True)
+    # todo-f 等待llm对齐字段wish1,2,3
+    wish_1 = models.CharField(verbose_name='心愿解读-1', max_length=1000, null=True)
+    wish_2 = models.CharField(verbose_name='心愿解读-2', max_length=1000, null=True)
+    wish_3 = models.CharField(verbose_name='心愿解读-3', max_length=1000, null=True)
+
 
     create_time = models.DateTimeField(verbose_name='创建时间', auto_now_add=True) 
     update_time = models.DateTimeField(verbose_name='修改时间', auto_now=True)
@@ -193,6 +212,7 @@ class EvalreportSerializer2(serializers.ModelSerializer):
     evalcontent_id = serializers.IntegerField(source='evalcontent.id')
     name = serializers.CharField(source='evalcontent.name')
     template = serializers.SerializerMethodField()
+    wish_list = serializers.SerializerMethodField()
 
     def get_template(self, obj):
         default_value = {
@@ -206,10 +226,30 @@ class EvalreportSerializer2(serializers.ModelSerializer):
         tpl = REPORT_INFO_DIC.get(obj.title, default_value)
         return tpl
 
+    # todo 三个心愿
+    def get_wish_list(self, obj):
+        wish_list = decode_wish(obj.evalcontent.wish)
+        detail_list = [obj.wish_1, obj.wish_2, obj.wish_3]
+
+        wish_list_return = []
+        for i, w in enumerate(wish_list):
+            if w == '':
+                break
+            wish_list_return.append(
+                {
+                    'wish': wish_list[i],
+                    'detail': detail_list[i]
+                }
+            )
+
+
+        return wish_list_return
+        
+
     class Meta:
         model = Evalreport
         # fields = '__all__'
-        exclude = ['user', 'evalcontent']
+        exclude = ['user', 'evalcontent', 'wish_1', 'wish_2', 'wish_3']
 
 
 

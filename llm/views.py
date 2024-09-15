@@ -1,4 +1,5 @@
 import json
+import re
 from django.db import IntegrityError
 import requests
 import datetime
@@ -12,7 +13,8 @@ from volcenginesdkarkruntime import Ark
 
 from bazi.lunar import Lunar
 
-# ftodo mbti
+
+# todo-f mbti
 class save_eval_content(APIView):
     authentication_classes = [MyJWTAuthentication, ]
     def post(self,request,*args,**kwargs):
@@ -315,7 +317,8 @@ class generate_eval_report(APIView):
         try:
             name = info['name']
             # 检查对应的测评内容是否记录下来了
-            content_found = Evalcontent.objects.filter(user_id=userid, name=name)
+            # todo 只考虑为自己测
+            content_found = Evalcontent.objects.filter(user_id=userid, name=name, forself=True)
             if content_found.count() == 0:
                 return Response({'ret': 3, 'errmsg':'对应的的测评内容未被记录', 'data':None})
 
@@ -327,7 +330,7 @@ class generate_eval_report(APIView):
                 return Response({'ret': 13, 'errmsg': '获取MBTI失败', 'data':None})
 
 
-            # 获取测评内容
+            # 生成送入llm的个人信息
             try:
                 bazi_dic = json.loads(content_found[0].bazi.replace("'", '"'))
             except Exception as e:
@@ -335,25 +338,24 @@ class generate_eval_report(APIView):
                 print(content_found[0].bazi)
                 return Response({'ret': 5, 'errmsg': '八字信息存在格式问题', 'data':None})
             
-            wish_list = ['事业', '学业', '财富', '爱情', '健康', '安全', '家庭', '快乐', '万事顺意']
-            wish = ''
-            for i, char in enumerate(content_found[0].wish):
-                if int(char) == 1:
-                    wish += wish_list[i]
-                    wish += ' '
-            
+            wish_list = decode_wish(content_found[0].wish)
+
             eval_dict = {
                 "生日": f"{content_found[0].birthdt.year}年{content_found[0].birthdt.month}月{content_found[0].birthdt.day}日{content_found[0].birthdt.hour}时{content_found[0].birthdt.minute}分",
                 "八字": bazi_dic["八字"],
                 "性别": bazi_dic["性别"],
                 "纳音": bazi_dic["纳音"],
                 "MBTI": mbti,
+                "心愿1": wish_list[0],
+                "心愿2": wish_list[1],
+                "心愿3": wish_list[2],
             }
             # print(eval_dict)
 
             # 将eval_dict信息作为第一条发给gpt
             new_msgs = [{"role": "system", "content": settings.EVALREPORT_PROMPT}, ]
             new_msgs.append({"role": "user", "content": str(eval_dict)})
+            print(str(eval_dict))
             
             try:
                 # print('对话大模型中')
@@ -363,34 +365,65 @@ class generate_eval_report(APIView):
                 print(repr(e))
                 return Response({'ret': 7, 'errmsg': '大模型故障', 'data':None})
 
-            # 从llm输出中提取报告内容
-            print(llm_result['content'])
-            parts = llm_result['content'].split('###')  # 测评报告的各个部分
-            gem = parts[0].strip()[5:-1]
-            report_parts = []
-            for s in parts[1:]:
-                report_parts.append(s.strip()[17:])
+
+            # 从llm输出中提取报告内容'
+            # -------------------------------------------------------------------------------
+            # todo 正则
+            llm_result_str_raw = llm_result['content']
+            print(llm_result_str_raw)
+
+            # 尝试找“###”，截取其后面的内容
+            index = llm_result_str_raw.find("###")
+            if index != -1:
+                llm_result_str_raw = llm_result_str_raw[index + 3:].strip()  # +3跳过“###”
+                if llm_result_str_raw[:2] != '宝石':
+                    return Response({'ret': 17, 'errmsg': '大模型返回内容无法解析', 'data':None})
+            else:
+                return Response({'ret': 17, 'errmsg': '大模型返回内容无法解析', 'data':None})
+
+            parts = llm_result_str_raw.split('###')  # 测评报告的各个部分
+            
+            
+            gem_pattern = r'堇青石|紫珍珠|海蓝石|绿松石|金红石|琥珀|祖母绿|翡翠'
+            # 使用 re.findall() 提取所有匹配的宝石
+            gem_match = re.findall(gem_pattern, parts[0].strip())
+            gem = gem_match[0]
+
+            report_key_parts = []
+            for part_string in parts[1:4]:
+                part_string = part_string.strip()
+                found_index = part_string.find("解释: ")
+                report_key_parts.append(part_string[found_index+4:])
+
+            report_wish_parts = [None for _ in range(3)]
+            for i, part_string in enumerate(parts[4:]):
+                part_string = part_string.strip()
+                found_index = part_string.find("解读: ")
+                report_wish_parts[i] = part_string[found_index+4:]
+
+
+            # -------------------------------------------------------------------------------
+
 
             report_found = Evalreport.objects.filter(user_id=userid, evalcontent__name=name)
-            # 已存在则更新，不存在则创建
             if report_found.count() == 0:  # 尝试创建一条数据
                 
-                # todo 等待llm对齐字段advice
-                # newc_report = Evalreport.objects.create(user_id=userid, evalcontent=content_found[0],
-                #                                         title=report_parts[1], overall=report_parts[2], 
-                #                                         wish=report_parts[3], advice=report_parts[4])
+                # todo-f 等待llm对齐字段wish1,2,3
                 newc_report = Evalreport.objects.create(user_id=userid, evalcontent=content_found[0],
-                                                        title=gem, overall_1=report_parts[0], 
-                                                        overall_2=report_parts[1], overall_3=report_parts[2],
-                                                        advice='TODO')
+                                                        title=gem, overall_1=report_key_parts[0], 
+                                                        overall_2=report_key_parts[1], overall_3=report_key_parts[2],
+                                                        wish_1=report_wish_parts[0], wish_2=report_wish_parts[1],
+                                                        wish_3=report_wish_parts[2],
+                                                        )
                 serializer = EvalreportSerializer2(instance=newc_report, many=False)
                 
             else:  # 已有该数据, 更新
 
-                # todo 等待llm对齐字段advice
-                report_found.update(title=gem, overall_1=report_parts[0], 
-                                    overall_2=report_parts[1], overall_3=report_parts[2],
-                                    advice='TODO',
+                # todo-f 等待llm对齐字段wish1,2,3
+                report_found.update( title=gem, overall_1=report_key_parts[0], 
+                                    overall_2=report_key_parts[1], overall_3=report_key_parts[2],
+                                    wish_1=report_wish_parts[0], wish_2=report_wish_parts[1],
+                                    wish_3=report_wish_parts[2],
                                     update_time=datetime.datetime.now())
                 
                 serializer = EvalreportSerializer2(instance=report_found[0], many=False)
@@ -423,7 +456,8 @@ class get_certain_eval_report(APIView):
         try:
             # report_id = info['id']
             name = info['name']
-            report_found = Evalreport.objects.filter(evalcontent__name=name)
+            # bug-f 查询时不能不考虑userid
+            report_found = Evalreport.objects.filter(user_id=userid, evalcontent__name=name)
             serializer = EvalreportSerializer2(instance=report_found[0], many=False)
             return Response({'ret': 0, 'data': serializer.data})
 

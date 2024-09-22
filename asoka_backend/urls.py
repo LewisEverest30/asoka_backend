@@ -66,6 +66,8 @@ urlpatterns = [
     path('get_recommended_product', get_recommended_product.as_view()),
 
     path('get_all_scheme', get_all_scheme_template.as_view()),
+
+    path('generate_advice', generate_advice.as_view()),
     path('get_advice', get_advice.as_view()),
     path('get_advice_for_scheme', get_advice_for_scheme.as_view()),
 

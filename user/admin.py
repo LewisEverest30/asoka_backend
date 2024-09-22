@@ -87,27 +87,9 @@ class AddressAdmin(admin.ModelAdmin, ExportExcelMixin):
 
 
 
-class AdviceAdmin(admin.ModelAdmin, ExportExcelMixin):
-    list_display = ("id", "user", 'person_name', 'gem_name', 'mark')
-    exclude = ()
-
-
-    list_display_links = ['person_name']
-
-    search_fields = ("person_name", )
-
-    actions = []
-
-    def has_delete_permission(self, request, obj=None):
-        return False
-    def has_change_permission(self, request, obj=None):
-        return False
-    def has_add_permission(self, request, obj=None):
-        return False
 
 
 
 # Register your models here.
 admin.site.register(User, UserAdmin)
 admin.site.register(Address, AddressAdmin)
-admin.site.register(Advice, AdviceAdmin)

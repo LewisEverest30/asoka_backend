@@ -4,11 +4,8 @@ import datetime
 from django.conf import settings
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from django.db.models import Case, When, F
 
 from .models import *
-from product.models import *
-from product.views import Integrate_Gem_lite_for_advice
 from .auth import MyJWTAuthentication, create_token
 
 
@@ -143,120 +140,4 @@ class save_phone(APIView):
         user.save()
         return Response({'ret': 0, 'errmsg': None, 'phone_number': phone_number})   
 
-
-
-# 获取所有建议
-class get_advice(APIView):
-    authentication_classes = [MyJWTAuthentication, ]
-    
-    def post(self,request,*args,**kwargs):
-        # 缩略图。名称。symbol。匹配度
-        userid = request.user['userid']
-
-        info = json.loads(request.body)
-        try:
-            name = info['name']
-
-            advice = list(Advice.objects.filter(user_id=1, person_name=name).order_by('-mark').values('gem_name', 'mark'))
-            if len(advice) == 0:
-                return Response({'ret': 4051, 'errmsg': '不存在的人名', 'advice':None})
-
-            gem_all = Gemstone.objects.all()
-            gem_integrate_dict = Integrate_Gem_lite_for_advice(gem_all)
-
-            for adv in advice:
-                # 添加缩略图和symbol
-                adv['thumbnail'] = gem_integrate_dict[adv['gem_name']]['thumbnail']
-                adv['symbol'] = gem_integrate_dict[adv['gem_name']]['symbol']
-
-            return Response({'ret': 0, 'errmsg': None, 'advice': advice})
-        except Exception as e:
-            print(repr(e))
-            return Response({'ret': -1, 'errmsg': '请检查提交的数据是否标准', 'advice':None})   
-
-
-
-
-# 获取所有建议 用户方案选配
-# todo Redis
-class get_advice_for_scheme(APIView):
-    authentication_classes = [MyJWTAuthentication, ]
-    
-    def post(self,request,*args,**kwargs):
-        # 尺寸，封面。缩略图。名称。symbol。price。匹配度。intro
-        userid = request.user['userid']
-
-        info = json.loads(request.body)
-        try:
-            name = info['name']
-
-            advice = list(Advice.objects.filter(user_id=1, person_name=name).order_by('-mark').values('gem_name', 'mark'))
-            if len(advice) == 0:
-                return Response({'ret': 4051, 'errmsg': '不存在的人名', 
-                                'ding': None,
-                                'yao': None,
-                                'zi': None,
-                                'pei': None,
-                                 })
-
-            mark_dict = {}  # 珠名-评分 字典
-            for adv in advice:
-                mark_dict[adv['gem_name']] = adv['mark']
-    
-
-            gem_ding = Gemstone.objects.filter(position='顶珠')
-            gem_ding = gem_ding.annotate(
-                mark=Case(
-                    *[When(name=k, then=v) for k, v in mark_dict.items()],  # *进行展开赋值
-                    default=0,
-                    output_field=models.IntegerField()
-                )
-            )
-            gem_ding = gem_ding.order_by('-mark').values('id', 'name', 'symbol', 'size', 'thumbnail', 'cover', 'intro', 'mark')
-
-            gem_yao = Gemstone.objects.filter(position='腰珠')
-            gem_yao = gem_yao.annotate(
-                mark=Case(
-                    *[When(name=k, then=v) for k, v in mark_dict.items()],  # *进行展开赋值
-                    default=0,
-                    output_field=models.IntegerField()
-                )
-            )
-            gem_yao = gem_yao.order_by('-mark').values('id', 'name', 'symbol', 'size', 'thumbnail', 'cover', 'intro', 'mark')
-
-            gem_zi = Gemstone.objects.filter(position='子珠')
-            gem_zi = gem_zi.annotate(
-                mark=Case(
-                    *[When(name=k, then=v) for k, v in mark_dict.items()],  # *进行展开赋值
-                    default=0,
-                    output_field=models.IntegerField()
-                )
-            )
-            gem_zi = gem_zi.order_by('-mark').values('id', 'name', 'symbol', 'size', 'thumbnail', 'cover', 'intro', 'mark')
-
-            gem_pei = Gemstone.objects.filter(position='配珠')
-            gem_pei = gem_pei.annotate(
-                mark=Case(
-                    *[When(name=k, then=v) for k, v in mark_dict.items()],  # *进行展开赋值
-                    default=0,
-                    output_field=models.IntegerField()
-                )
-            )
-            gem_pei = gem_pei.order_by('-mark').values('id', 'name', 'symbol', 'size', 'thumbnail', 'cover', 'intro', 'mark')
-
-
-            return Response({'ret': 0, 'errmsg': None, 
-                             'ding': list(gem_ding),
-                             'yao': list(gem_yao),
-                             'zi': list(gem_zi),
-                             'pei': list(gem_pei),
-                             })
-        except Exception as e:
-            print(repr(e))
-            return Response({'ret': -1, 'errmsg': '请检查提交的数据是否标准',
-                             'ding': None,
-                             'yao': None,
-                             'zi': None,
-                             'pei': None,                             
-                             })   
 

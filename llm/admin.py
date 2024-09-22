@@ -103,8 +103,30 @@ class ChathistoryAdmin(admin.ModelAdmin, ExportExcelMixin):
     def has_change_permission(self, request, obj=None):
         return False
 
+
+class AdviceAdmin(admin.ModelAdmin, ExportExcelMixin):
+    list_display = ("id", "user", 'person_name', 'gem_name', 'mark')
+    exclude = ()
+
+
+    list_display_links = ['person_name']
+
+    search_fields = ("person_name", )
+
+    actions = []
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+    def has_change_permission(self, request, obj=None):
+        return False
+    def has_add_permission(self, request, obj=None):
+        return False
+
+
 admin.site.register(Evalcontent, EvalcontentAdmin)
 
 admin.site.register(Chathistory, ChathistoryAdmin)
 
 admin.site.register(Evalreport, EvalreportAdmin)
+
+admin.site.register(Advice, AdviceAdmin)

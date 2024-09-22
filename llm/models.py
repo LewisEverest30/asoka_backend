@@ -2,9 +2,10 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
 from django.conf import settings
+from django.core.validators import MinValueValidator, MaxValueValidator
 
 from user.models import User
-
+from product.models import Gemstone
 
 
 def decode_wish(wish):
@@ -151,7 +152,8 @@ class Evalcontent(models.Model):
     class Meta:
         verbose_name = "测评内容"
         verbose_name_plural = "测评内容"
-        unique_together = (("user", "name", "forself"),)
+        # unique_together = (("user", "name", "forself"),)
+        unique_together = (("user", "name"),)
 
 
 class EvalcontentSerializer(serializers.ModelSerializer):
@@ -226,7 +228,7 @@ class EvalreportSerializer2(serializers.ModelSerializer):
         tpl = REPORT_INFO_DIC.get(obj.title, default_value)
         return tpl
 
-    # todo 三个心愿
+    # todo-f 三个心愿
     def get_wish_list(self, obj):
         wish_list = decode_wish(obj.evalcontent.wish)
         detail_list = [obj.wish_1, obj.wish_2, obj.wish_3]
@@ -241,7 +243,6 @@ class EvalreportSerializer2(serializers.ModelSerializer):
                     'detail': detail_list[i]
                 }
             )
-
 
         return wish_list_return
         
@@ -286,3 +287,49 @@ class ChathistorySerializer(serializers.ModelSerializer):
         # fields = '__all__'
         fields = ['talker', 'msg', 'create_time', 'type']
 
+
+
+
+
+class Advice(models.Model):
+    user = models.ForeignKey(verbose_name='用户', to=User, on_delete=models.CASCADE)
+    person_name = models.CharField(verbose_name='人名', max_length=15, null=False, blank=False)
+
+    gem_name = models.CharField(verbose_name='珠名称', max_length=20, null=False, blank=False)
+    
+    mark = models.IntegerField(verbose_name='匹配度',  null=False, blank=False,
+                               validators=[MinValueValidator(0), MaxValueValidator(100)])
+    reason = models.CharField(verbose_name='解释', max_length=1000, null=False, blank=False, default='')
+
+    # def __str__(self):
+    #     return f"{self.person_name} - {self.gem_name}"
+
+    class Meta:
+        verbose_name = "珠推荐"
+        verbose_name_plural = "珠推荐"
+
+
+class AdviceSerializer(serializers.ModelSerializer):
+    thumbnail = serializers.SerializerMethodField()
+    symbol = serializers.SerializerMethodField()
+
+    def get_symbol(self, obj):
+        gem = Gemstone.objects.filter(name=obj.gem_name)
+        if gem.count() == 0:
+            return ''
+        else:
+            # print(gem[0].symbol)
+            return gem[0].symbol
+
+
+    def get_thumbnail(self, obj):
+        gem = Gemstone.objects.filter(name=obj.gem_name)
+        if gem.count() == 0:
+            return ''
+        else:
+            # print(gem[0].thumbnail)
+            return str(gem[0].thumbnail)
+    
+    class Meta:
+        model = Advice
+        exclude = ['user', 'person_name']

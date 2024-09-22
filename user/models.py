@@ -1,7 +1,6 @@
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
-from django.core.validators import MinValueValidator, MaxValueValidator
 
 
 class Accesstoken(models.Model):
@@ -77,19 +76,3 @@ class AddressSerializer(serializers.ModelSerializer):
         # fields = '__all__'
         exclude = ['user']
 
-
-class Advice(models.Model):
-    user = models.ForeignKey(verbose_name='用户', to=User, on_delete=models.CASCADE)
-    person_name = models.CharField(verbose_name='人名', max_length=15, null=False, blank=False)
-
-    gem_name = models.CharField(verbose_name='珠名称', max_length=20, null=False, blank=False)
-    
-    mark = models.IntegerField(verbose_name='匹配度',  null=False, blank=False,
-                               validators=[MinValueValidator(0), MaxValueValidator(100)])
-
-
-class AdviceSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = Advice
-        exclude = ['user', 'person_name']

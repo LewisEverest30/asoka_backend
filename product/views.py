@@ -2,6 +2,8 @@ import json
 import django
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from functools import reduce
+from django.db.models import Q
 
 from .models import *
 from llm.models import *
@@ -257,7 +259,18 @@ class get_certain_gem_by_name_type(APIView):
             gem_pos = info['type']
             found = Gemstone.objects.filter(name=gem_name, position=gem_pos)
 
-            found_integrate = Integrate_Gem_full(found).values()            
+            # found_integrate = Integrate_Gem_full(found).values()
+            found_integrate = Integrate_Gem_full(found)[gem_name]
+
+            # todo-f 相关商品
+            symbols_found = found_integrate['symbol'].split()
+            reduce_filter = reduce(lambda x, y: x | y, [Q(symbol__icontains=sym) & ~Q(name=gem_name) for sym in symbols_found])  # 使用reduce对象组合多个查询条件Q
+            related_prodcut = Gemstone.objects.filter(reduce_filter)
+            related_integrate = list(Integrate_Gem_lite_for_product(related_prodcut).values())
+            if len(related_integrate) > 3:
+                related_integrate = related_integrate[:3]
+            found_integrate['related_product'] = related_integrate
+
 
             return Response({'ret': 0, 'data': found_integrate})
 
@@ -516,8 +529,11 @@ class get_gift_by_type(APIView):
         userid = request.user['userid']
         info = json.loads(request.body)
         typ = info['type']
-        
-        found = Gift.objects.filter(symbol__contains=typ)
+
+        if typ == '全部':
+            found = Gift.objects.filter()
+        else:
+            found = Gift.objects.filter(symbol__contains=typ)
 
         if found.count() == 0:
             return Response({'ret': 41701, 'data': None})
@@ -610,8 +626,8 @@ class get_all_scheme_template(APIView):
         # 获取当前账号测评过的所有名字
         # 生成过测评报告才会有推荐信息，就是那个advice
         # todo 从测评报告里查 or 从advice里查
-        person_names = Evalreport.objects.filter(user_id=userid).values('evalcontent__name').distinct()
-        person_names = list(person_names.values_list('evalcontent__name', flat=True))  # queryset转为list是字典list，这行是想要的那一列的值list
+        person_names = Evalcontent.objects.filter(user_id=userid).values('name').distinct()
+        person_names = list(person_names.values_list('name', flat=True))  # queryset转为list是字典list，这行是想要的那一列的值list
         # print(person_names)
 
         templates = Scheme_Template.objects.all()

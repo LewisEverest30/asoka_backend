@@ -3,6 +3,9 @@ from django.db import models
 from django.core.validators import MinValueValidator, RegexValidator
 from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
+from functools import reduce
+from django.db.models import Q
+
 from user.models import *
 
 # pattern_component = r'^(\d+\*[^\|\*]+\|)*(\d+\*[^\|\*]+)$'
@@ -468,9 +471,16 @@ class BraceletSerializer1(serializers.ModelSerializer):
         fields = ['id', 'name', 'type', 'symbol', 'cover', 'price', 'sales', 'inventory']
         # exclude = ['user', 'evalcontent']
 
+class BraceletSerializer_helper(serializers.ModelSerializer):  # 用于serializer2
+    class Meta:
+        model = Bracelet
+        fields = ['id', 'name', 'cover', 'symbol', 'price']
+        # exclude = ['user', 'evalcontent']
+
 class BraceletSerializer2(serializers.ModelSerializer):
     type = serializers.CharField(source='typ')
     pics = serializers.SerializerMethodField()
+    related_product = serializers.SerializerMethodField()
     
     def get_pics(self, obj):
         found = BraceletPic.objects.filter(bracelet_id=obj.id)
@@ -479,6 +489,17 @@ class BraceletSerializer2(serializers.ModelSerializer):
             return serializer.data
         else:
             return None
+
+    def get_related_product(self, obj):
+        # todo-f 相关商品
+        symbols_found = str(obj.symbol).split()
+        reduce_filter = reduce(lambda x, y: x | y, [Q(symbol__icontains=sym) & ~Q(name=obj.name) for sym in symbols_found])  # 使用reduce对象组合多个查询条件Q
+        related_prodcut = Bracelet.objects.filter(reduce_filter)
+        if related_prodcut.count() > 3:
+            related_prodcut = related_prodcut[:3]
+        helper_ser = BraceletSerializer_helper(instance=related_prodcut, many=True)
+
+        return list(helper_ser.data)
 
     class Meta:
         model = Bracelet
@@ -510,10 +531,17 @@ class StampSerializer1(serializers.ModelSerializer):
         fields = ['id', 'name', 'type', 'symbol', 'cover', 'price', 'sales', 'inventory']
         # exclude = ['user', 'evalcontent']
 
+class StampSerializer_helper(serializers.ModelSerializer):  # 用于serializer2
+    class Meta:
+        model = Stamp
+        fields = ['id', 'name', 'cover', 'symbol', 'price']
+        # exclude = ['user', 'evalcontent']
+
 class StampSerializer2(serializers.ModelSerializer):
     type = serializers.CharField(source='typ')
     pics = serializers.SerializerMethodField()
-    
+    related_product = serializers.SerializerMethodField()
+
     def get_pics(self, obj):
         found = StampPic.objects.filter(stamp_id=obj.id)
         if found.count() > 0:
@@ -521,6 +549,18 @@ class StampSerializer2(serializers.ModelSerializer):
             return serializer.data
         else:
             return None
+
+    def get_related_product(self, obj):
+        # todo-f 相关商品
+        symbols_found = str(obj.symbol).split()
+        reduce_filter = reduce(lambda x, y: x | y, [Q(symbol__icontains=sym) & ~Q(name=obj.name) for sym in symbols_found])  # 使用reduce对象组合多个查询条件Q
+        related_prodcut = Stamp.objects.filter(reduce_filter)
+        if related_prodcut.count() > 3:
+            related_prodcut = related_prodcut[:3]
+        helper_ser = StampSerializer_helper(instance=related_prodcut, many=True)
+
+        return list(helper_ser.data)
+
 
     class Meta:
         model = Stamp
@@ -550,10 +590,18 @@ class GiftSerializer1(serializers.ModelSerializer):
         fields = ['id', 'name', 'symbol', 'cover', 'intro', 'price', 'sales']
         # exclude = ['user', 'evalcontent']
 
+class GiftSerializer_helper(serializers.ModelSerializer):  # 用于serializer2
+    class Meta:
+        model = Gift
+        fields = ['id', 'name', 'cover', 'symbol', 'price']
+        # exclude = ['user', 'evalcontent']
+
+
 class GiftSerializer2(serializers.ModelSerializer):
     pics = serializers.SerializerMethodField()
     components = serializers.SerializerMethodField()
-  
+    related_product = serializers.SerializerMethodField()
+
     def get_pics(self, obj):
         found = GiftPic.objects.filter(gift_id=obj.id)
         if found.count() > 0:
@@ -561,6 +609,17 @@ class GiftSerializer2(serializers.ModelSerializer):
             return serializer.data
         else:
             return None
+
+    def get_related_product(self, obj):
+        # todo-f 相关商品
+        symbols_found = str(obj.symbol).split()
+        reduce_filter = reduce(lambda x, y: x | y, [Q(symbol__icontains=sym) & ~Q(name=obj.name) for sym in symbols_found])  # 使用reduce对象组合多个查询条件Q
+        related_prodcut = Gift.objects.filter(reduce_filter)
+        if related_prodcut.count() > 3:
+            related_prodcut = related_prodcut[:3]
+        helper_ser = GiftSerializer_helper(instance=related_prodcut, many=True)
+
+        return list(helper_ser.data)
 
     def get_components(self, obj):
         raw_component = obj.component

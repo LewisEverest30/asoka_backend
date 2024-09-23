@@ -10,7 +10,7 @@ from llm.models import *
 from user.auth import MyJWTAuthentication, create_token
 
 
-# 按名称整合queryset中的珠
+# 按名称整合queryset中的珠，详细信息
 def Integrate_Gem_full(queryset: django.db.models.query.QuerySet) -> dict:
     def get_gem_pics(gem_id):
         found = GemstonePic.objects.filter(gemstone_id=gem_id)
@@ -48,9 +48,9 @@ def Integrate_Gem_full(queryset: django.db.models.query.QuerySet) -> dict:
  
                 }
             )
-            gem_dict[gem_name]['total_sales'] += gem['sales']  # 累计总销量
-            if gem['price'] < gem_dict[gem_name]['min_price']:   # 尝试更新最低单价
-                gem_dict[gem_name]['min_price'] = gem['price']
+            gem_dict[gem_name]['sales'] += gem['sales']  # 累计总销量
+            if gem['price'] < gem_dict[gem_name]['price']:   # 尝试更新最低单价
+                gem_dict[gem_name]['price'] = gem['price']
 
         else:  # 第一次查到某一个珠
             gem_dict[gem_name] = gem
@@ -60,6 +60,15 @@ def Integrate_Gem_full(queryset: django.db.models.query.QuerySet) -> dict:
             price = gem_dict[gem_name].pop('price')
             inventory = gem_dict[gem_name].pop('inventory')
             sales = gem_dict[gem_name].pop('sales')
+
+            # bug-f 图片地址加media前缀
+            cover_raw = gem_dict[gem_name].pop('cover')
+            thumbnail_raw = gem_dict[gem_name].pop('thumbnail')
+            detail_raw = gem_dict[gem_name].pop('detail')
+            gem_dict[gem_name]['cover'] = settings.MEDIA_URL + cover_raw
+            gem_dict[gem_name]['thumbnail'] = settings.MEDIA_URL + thumbnail_raw
+            gem_dict[gem_name]['detail'] = settings.MEDIA_URL + detail_raw
+
             gem_dict[gem_name]['category'] = [
                 {
                     'id': gid,
@@ -70,8 +79,8 @@ def Integrate_Gem_full(queryset: django.db.models.query.QuerySet) -> dict:
                     'sales': sales,
                 },
             ]
-            gem_dict[gem_name]['total_sales'] = sales
-            gem_dict[gem_name]['min_price'] = price
+            gem_dict[gem_name]['sales'] = sales
+            gem_dict[gem_name]['price'] = price
             gem_dict[gem_name]['pics'] = get_gem_pics(gid)  # 尝试获取产品摄影
             
             del gem_dict[gem_name]['is_recommended']
@@ -83,6 +92,7 @@ def Integrate_Gem_full(queryset: django.db.models.query.QuerySet) -> dict:
     return gem_dict
 
 
+# 按名称整合queryset中的珠，简要信息
 def Integrate_Gem_lite_for_product(queryset: django.db.models.query.QuerySet) -> dict:
     all_gem = queryset.values()  # 由dict构成的queryset
     
@@ -97,8 +107,8 @@ def Integrate_Gem_lite_for_product(queryset: django.db.models.query.QuerySet) ->
         
         if gem_name not in gem_dict:
             gem_dict[gem_name] = gem
-            gem_dict[gem_name]['total_sales'] = gem_dict[gem_name].pop('sales')
-            gem_dict[gem_name]['min_price'] = gem_dict[gem_name].pop('price')
+            gem_dict[gem_name]['sales'] = gem_dict[gem_name].pop('sales')
+            gem_dict[gem_name]['price'] = gem_dict[gem_name].pop('price')
 
             del gem_dict[gem_name]['position']
             del gem_dict[gem_name]['id']
@@ -115,13 +125,20 @@ def Integrate_Gem_lite_for_product(queryset: django.db.models.query.QuerySet) ->
             del gem_dict[gem_name]['thumbnail']
             del gem_dict[gem_name]['intro']
 
+            # bug-f 图片地址加media前缀
+            cover_raw = gem_dict[gem_name].pop('cover')
+            gem_dict[gem_name]['cover'] = settings.MEDIA_URL + cover_raw
+
+
         else:
-            gem_dict[gem_name]['total_sales'] += gem['sales']  # 累计总销量
-            if gem['price'] < gem_dict[gem_name]['min_price']:   # 尝试更新最低单价
-                gem_dict[gem_name]['min_price'] = gem['price']
+            gem_dict[gem_name]['sales'] += gem['sales']  # 累计总销量
+            if gem['price'] < gem_dict[gem_name]['price']:   # 尝试更新最低单价
+                gem_dict[gem_name]['price'] = gem['price']
 
     return gem_dict
 
+
+# （未使用）按名称整合queryset中的珠，用于推荐信息显示
 def Integrate_Gem_lite_for_advice(queryset: django.db.models.query.QuerySet) -> dict:
     all_gem = queryset.values()  # 由dict构成的queryset
     
@@ -152,14 +169,21 @@ def Integrate_Gem_lite_for_advice(queryset: django.db.models.query.QuerySet) -> 
             del gem_dict[gem_name]['update_time']
             del gem_dict[gem_name]['inventory']
 
+            # bug-f 图片地址加media前缀
+            cover_raw = gem_dict[gem_name].pop('cover')
+            thumbnail_raw = gem_dict[gem_name].pop('thumbnail')
+            gem_dict[gem_name]['cover'] = settings.MEDIA_URL + cover_raw
+            gem_dict[gem_name]['thumbnail'] = settings.MEDIA_URL + thumbnail_raw
+
         else:
-            gem_dict[gem_name]['total_sales'] += gem['sales']  # 累计总销量
-            if gem['price'] < gem_dict[gem_name]['min_price']:   # 尝试更新最低单价
-                gem_dict[gem_name]['min_price'] = gem['price']
+            gem_dict[gem_name]['sales'] += gem['sales']  # 累计总销量
+            if gem['price'] < gem_dict[gem_name]['price']:   # 尝试更新最低单价
+                gem_dict[gem_name]['price'] = gem['price']
 
     return gem_dict
 
 
+# 按名称整合queryset中的珠，极简信息，只保留name，cover
 def Integrate_Gem_mini(queryset: django.db.models.query.QuerySet) -> dict:
     all_gem = queryset.values()  # 由dict构成的queryset
     
@@ -191,6 +215,10 @@ def Integrate_Gem_mini(queryset: django.db.models.query.QuerySet) -> dict:
             del gem_dict[gem_name]['intro']
             del gem_dict[gem_name]['inventory']
             del gem_dict[gem_name]['sales']
+
+            # bug-f 图片地址加media前缀
+            cover_raw = gem_dict[gem_name].pop('cover')
+            gem_dict[gem_name]['cover'] = settings.MEDIA_URL + cover_raw
 
     return gem_dict
 

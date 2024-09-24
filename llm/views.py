@@ -152,7 +152,7 @@ class start_chat(APIView):
 
     def fetch_non_stream_response(self, messages):
         stream = self.client.chat.completions.create(
-            model="ep-20240726181421-rfxtl",
+            model=settings.VOLCENGINE_MODEL_ID,
             messages=messages,
             stream=False
         )
@@ -203,7 +203,7 @@ class continue_chat(APIView):
 
     def fetch_non_stream_response(self, messages):
         stream = self.client.chat.completions.create(
-            model="ep-20240726181421-rfxtl",
+            model=settings.VOLCENGINE_MODEL_ID,
             messages=messages,
             stream=False
         )
@@ -319,7 +319,7 @@ class generate_eval_report(APIView):
 
     def fetch_non_stream_response(self, messages):
         stream = self.client.chat.completions.create(
-            model="ep-20240726181421-rfxtl",
+            model=settings.VOLCENGINE_MODEL_ID,
             messages=messages,
             stream=False
         )
@@ -388,7 +388,7 @@ class generate_eval_report(APIView):
             # -------------------------------------------------------------------------------
             # todo-f 正则
             llm_result_str_raw = llm_result['content']
-            print(llm_result_str_raw)
+            # print(llm_result_str_raw)
 
             # 尝试找“###”，截取其后面的内容
             index = llm_result_str_raw.find("###")
@@ -409,14 +409,14 @@ class generate_eval_report(APIView):
             report_key_parts = []
             for part_string in parts[1:4]:
                 part_string = part_string.strip()
-                found_index = part_string.find("解释: ")
-                report_key_parts.append(part_string[found_index+4:])
+                found_index = part_string.find(" --- ")
+                report_key_parts.append(part_string[found_index+5:])
 
             report_wish_parts = [None for _ in range(3)]
             for i, part_string in enumerate(parts[4:]):
                 part_string = part_string.strip()
-                found_index = part_string.find("解读: ")
-                report_wish_parts[i] = part_string[found_index+4:]
+                found_index = part_string.find(" --- ")
+                report_wish_parts[i] = part_string[found_index+5:]
 
 
 
@@ -490,7 +490,7 @@ class generate_advice(APIView):
 
     def fetch_non_stream_response(self, messages):
         stream = self.client.chat.completions.create(
-            model="ep-20240726181421-rfxtl",
+            model=settings.VOLCENGINE_MODEL_ID,
             messages=messages,
             stream=False
         )

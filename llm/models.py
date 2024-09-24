@@ -215,6 +215,9 @@ class EvalreportSerializer2(serializers.ModelSerializer):
     name = serializers.CharField(source='evalcontent.name')
     template = serializers.SerializerMethodField()
     wish_list = serializers.SerializerMethodField()
+    overall_1 = serializers.SerializerMethodField()
+    overall_2 = serializers.SerializerMethodField()
+    overall_3 = serializers.SerializerMethodField()
 
     def get_template(self, obj):
         default_value = {
@@ -237,15 +240,44 @@ class EvalreportSerializer2(serializers.ModelSerializer):
         for i, w in enumerate(wish_list):
             if w == '':
                 break
+            
+            index = detail_list[i].find("$")
             wish_list_return.append(
                 {
                     'wish': wish_list[i],
-                    'detail': detail_list[i]
+                    'wenyan': detail_list[i][:index],
+                    'baihua': detail_list[i][index+1:]
                 }
             )
 
         return wish_list_return
         
+    def get_overall_1(self, obj):
+        overall = obj.overall_1
+        index = overall.find("$")
+        ret = {
+            'wenyan': overall[:index],
+            'baihua': overall[index+1:]
+        }
+        return ret
+    def get_overall_2(self, obj):
+        overall = obj.overall_2
+        index = overall.find("$")
+        ret = {
+            'wenyan': overall[:index],
+            'baihua': overall[index+1:]
+        }
+        return ret
+    def get_overall_3(self, obj):
+        overall = obj.overall_3
+        index = overall.find("$")
+        ret = {
+            'wenyan': overall[:index],
+            'baihua': overall[index+1:]
+        }
+        return ret
+
+
 
     class Meta:
         model = Evalreport

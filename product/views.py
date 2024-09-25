@@ -4,11 +4,15 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from functools import reduce
 from django.db.models import Q
+from django.conf import settings
+
 
 from .models import *
 from llm.models import *
 from user.auth import MyJWTAuthentication, create_token
 
+PRODUCT_EXAMPLE_NUM = 2  # 获取宝石的所有类别时展示几个示例
+RELATED_PRODUCT_NUM = 3  # 相关商品展示个数
 
 # 按名称整合queryset中的珠，详细信息
 def Integrate_Gem_full(queryset: django.db.models.query.QuerySet) -> dict:
@@ -265,19 +269,19 @@ class get_gem_types(APIView):
         # 全部
         result_list = []
         found_all = Gemstone.objects.filter().order_by('-is_recommended', '-create_time')
-        found_all_integrate = Integrate_Gem_mini(found_all).values()    # 合并
+        found_all_integrate = list(Integrate_Gem_mini(found_all).values())    # 合并
         result_list.append({
             'type': '全部',
-            'data': found_all_integrate if len(found_all_integrate) <=3 else found_all_integrate[:3]  # 最多返回三个
+            'data': found_all_integrate if len(found_all_integrate) <= PRODUCT_EXAMPLE_NUM else found_all_integrate[:PRODUCT_EXAMPLE_NUM]  # 最多返回k个
         })
 
         # 其他各个类
         for choice in Gemstone.Pos_choices[:-1]:
             found = Gemstone.objects.filter(position=choice[0]).order_by('-is_recommended', '-create_time')
-            found_integrate = Integrate_Gem_mini(found).values()    # 合并
+            found_integrate = list(Integrate_Gem_mini(found).values())    # 合并
             result_list.append({
                 'type': choice[0],
-                'data': found_integrate if len(found_integrate) <=3 else found_integrate[:3]  # 最多返回三个
+                'data': found_integrate if len(found_integrate) <= PRODUCT_EXAMPLE_NUM else found_integrate[:PRODUCT_EXAMPLE_NUM]  # 最多返回k个
             })
 
         if len(result_list) == 0:
@@ -318,7 +322,10 @@ class get_certain_gem_by_name_type(APIView):
         try:
             gem_name = info['name']
             gem_pos = info['type']
-            found = Gemstone.objects.filter(name=gem_name, position=gem_pos)
+            if gem_pos == '全部':
+                found = Gemstone.objects.filter(name=gem_name)
+            else:
+                found = Gemstone.objects.filter(name=gem_name, position=gem_pos)
 
             # found_integrate = Integrate_Gem_full(found).values()
             found_integrate = Integrate_Gem_full(found)[gem_name]
@@ -328,8 +335,8 @@ class get_certain_gem_by_name_type(APIView):
             reduce_filter = reduce(lambda x, y: x | y, [Q(symbol__icontains=sym) & ~Q(name=gem_name) for sym in symbols_found])  # 使用reduce对象组合多个查询条件Q
             related_prodcut = Gemstone.objects.filter(reduce_filter)
             related_integrate = list(Integrate_Gem_lite_for_product(related_prodcut).values())
-            if len(related_integrate) > 3:
-                related_integrate = related_integrate[:3]
+            if len(related_integrate) > RELATED_PRODUCT_NUM:
+                related_integrate = related_integrate[:RELATED_PRODUCT_NUM]
             found_integrate['related_product'] = related_integrate
 
 
@@ -390,7 +397,7 @@ class get_bracelet_types(APIView):
         ret_all = list(serializer_all.data)
         result_list.append({
             'type': '全部',
-            'data': ret_all if len(ret_all) <=3 else ret_all[:3]
+            'data': ret_all if len(ret_all) <= PRODUCT_EXAMPLE_NUM else ret_all[:PRODUCT_EXAMPLE_NUM]
         })
 
         # 其他各个类
@@ -400,7 +407,7 @@ class get_bracelet_types(APIView):
             ret = list(serializer.data)
             result_list.append({
                 'type': choice[0],
-                'data': ret if len(ret) <=3 else ret[:3]
+                'data': ret if len(ret) <= PRODUCT_EXAMPLE_NUM else ret[:PRODUCT_EXAMPLE_NUM]
             })
 
         if len(result_list) == 0:
@@ -478,7 +485,7 @@ class get_stamp_types(APIView):
         ret_all = list(serializer_all.data)
         result_list.append({
             'type': '全部',
-            'data': ret_all if len(ret_all) <=3 else ret_all[:3]
+            'data': ret_all if len(ret_all) <= PRODUCT_EXAMPLE_NUM else ret_all[:PRODUCT_EXAMPLE_NUM]
         })
         # 其他各个类
         for choice in Stamp.Type_choices[:-1]:
@@ -487,7 +494,7 @@ class get_stamp_types(APIView):
             ret = list(serializer.data)
             result_list.append({
                 'type': choice[0],
-                'data': ret if len(ret) <=3 else ret[:3]
+                'data': ret if len(ret) <= PRODUCT_EXAMPLE_NUM else ret[:PRODUCT_EXAMPLE_NUM]
             })
 
         if len(result_list) == 0:
@@ -562,7 +569,7 @@ class get_gift_types(APIView):
         ret_all = list(serializer_all.data)
         result_list.append({
             'type': '全部',
-            'data': ret_all if len(ret_all) <=3 else ret_all[:3]
+            'data': ret_all if len(ret_all) <= PRODUCT_EXAMPLE_NUM else ret_all[:PRODUCT_EXAMPLE_NUM]
         })
 
         # 其他各个类
@@ -572,7 +579,7 @@ class get_gift_types(APIView):
             ret = list(serializer.data)
             result_list.append({
                 'type': choice[0],
-                'data': ret if len(ret) <=3 else ret[:3]
+                'data': ret if len(ret) <= PRODUCT_EXAMPLE_NUM else ret[:PRODUCT_EXAMPLE_NUM]
             })
 
         if len(result_list) == 0:

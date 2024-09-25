@@ -8,13 +8,13 @@ from rest_framework.views import APIView
 from django.db.models import Q, F, Value
 from django.db.models.functions import Concat
 from django.db.models import Case, When, F
+from volcenginesdkarkruntime import Ark
 
 
 from .models import *
 from user.auth import MyJWTAuthentication, create_token
-from volcenginesdkarkruntime import Ark
 from product.models import Gemstone
-from product.views import Integrate_Gem_lite_for_advice
+from product.views import Integrate_Gem_only_name_symbol
 
 
 from bazi.lunar import Lunar
@@ -100,7 +100,7 @@ class save_eval_content(APIView):
             return Response({'ret': 5, 'errmsg': '同一个用户涉及的测评中出现重名'})   
         except Exception as e:
             print(repr(e))
-            return Response({'ret': -1, 'errmsg': '请检查提交的数据是否标准'})   
+            return Response({'ret': -1, 'errmsg': '其他错误'})   
 
         # 为自己测，将测评数据同步到个人信息
         if forself==True:
@@ -144,7 +144,7 @@ class get_eval_content(APIView):
         serializer = EvalcontentSerializer(instance=content, many=False)
         return Response({'ret': 0, 'data': serializer.data})
 
-
+# ----------------------------------------------------------
 
 class start_chat(APIView):
     authentication_classes = [MyJWTAuthentication, ]
@@ -194,7 +194,7 @@ class start_chat(APIView):
                 return Response({'ret': 3, 'errmsg': '已存在聊天历史记录，请继续聊天或清空历史记录再开始新的聊天', 'llm_msg':None})
         except Exception as e:
             print(repr(e))
-            return Response({'ret': -1, 'errmsg': '请检查提交的数据是否标准', 'llm_msg':None})
+            return Response({'ret': -1, 'errmsg': '其他错误', 'llm_msg':None})
 
 
 class continue_chat(APIView):
@@ -256,7 +256,7 @@ class continue_chat(APIView):
                 return Response({'ret': 0, 'errmsg': None, 'llm_msg':llm_result['content']})
         except Exception as e:
             print(repr(e))
-            return Response({'ret': -1, 'errmsg': '请检查提交的数据是否标准', 'llm_msg':None})
+            return Response({'ret': -1, 'errmsg': '其他错误', 'llm_msg':None})
 
 
 # class save_message(APIView):
@@ -271,7 +271,7 @@ class continue_chat(APIView):
 #             return Response({'ret': 0, 'errmsg': None})
 #         except Exception as e:
 #             print(repr(e))
-#             return Response({'ret': -1, 'errmsg': '请检查提交的数据是否标准'})
+#             return Response({'ret': -1, 'errmsg': '其他错误'})
 
 
 class get_chat_history(APIView):
@@ -312,6 +312,8 @@ class clear_chat_history(APIView):
             print(repr(e))
             return Response({'ret': -1})
 
+
+# -------------------------------------------------------
 
 class generate_eval_report(APIView):
     authentication_classes = [MyJWTAuthentication, ]
@@ -370,6 +372,11 @@ class generate_eval_report(APIView):
             }
             # print(eval_dict)
 
+            with open('D:\\eval_report.log', 'a+') as f:
+                f.write('输入：\n')
+                f.write(str(eval_dict))
+                f.write('\n')
+
             # 将eval_dict信息作为第一条发给gpt
             new_msgs = [{"role": "system", "content": settings.EVALREPORT_PROMPT}, ]
             new_msgs.append({"role": "user", "content": str(eval_dict)})
@@ -389,6 +396,11 @@ class generate_eval_report(APIView):
             # todo-f 正则
             llm_result_str_raw = llm_result['content']
             # print(llm_result_str_raw)
+
+            with open('D:\\eval_report.log', 'a') as f:
+                f.write('输出：\n')
+                f.write(str(llm_result_str_raw))
+                f.write('\n\n')
 
             # 尝试找“###”，截取其后面的内容
             index = llm_result_str_raw.find("###")
@@ -446,7 +458,7 @@ class generate_eval_report(APIView):
             return Response({'ret': 0, 'errmsg':None, 'data':serializer.data})
         except Exception as e:
             print(repr(e))
-            return Response({'ret': -1, 'errmsg':'请检查提交的数据是否标准', 'data':None})   
+            return Response({'ret': -1, 'errmsg':'其他错误', 'data':None})   
 
 
 class get_all_eval_report(APIView):
@@ -481,6 +493,18 @@ class get_certain_eval_report(APIView):
             print(repr(e))
             return Response({'ret': -1, 'data':None})   
                 
+
+# ---------------------------------------------------------
+
+def scale_dict_values(input_dict: dict, target_min=30, target_max=100):
+    all_values = list(input_dict.values())
+    max_value = max(all_values)
+    min_value = min(all_values)
+    if max_value == min_value or target_max == target_min:
+        return
+    for key in input_dict.keys():
+        input_dict[key] = int(target_min +  ((input_dict[key] - min_value) * (target_max - target_min) / (max_value - min_value)))
+
 
 # todo-f 生成珠推荐信息
 # 区分人名 “非本人”
@@ -525,8 +549,15 @@ class generate_advice(APIView):
                 "性别": bazi_dic["性别"],
                 "纳音": bazi_dic["纳音"],
             }
+            
+            with open('D:\\advice.log', 'a+') as f:
+                f.write('输入：\n')
+                f.write(str(eval_dict))
+                f.write('\n')
+
+            
             new_msgs = [{"role": "system", "content": settings.ADVICE_PROMPT}, ]  # prompt
-            new_msgs.append({"role": "user", "content": str(eval_dict)})  # 将eval_dict信息作为第一条发给gpt
+            new_msgs.append({"role": "user", "content": str(eval_dict)})  # 将eval_dict信息作为第一条发给gpt            
             try:
                 # print('对话大模型中')
                 llm_result = self.fetch_non_stream_response(new_msgs)
@@ -538,60 +569,70 @@ class generate_advice(APIView):
 
             # 初步处理大模型输出，尝试找“###”，截取其后面的内容
             llm_result_str_raw = llm_result['content']
-            print(llm_result_str_raw)
+            # print(llm_result_str_raw)
+
+            with open('D:\\advice.log', 'a+') as f:
+                f.write('输出：\n')
+                f.write(str(llm_result_str_raw))
+                f.write('\n\n')
+
             index = llm_result_str_raw.find("###")
             if index != -1:
                 llm_result_str_raw = llm_result_str_raw[index + 3:].strip()  # +3跳过“###”
-                if llm_result_str_raw[:2] != '宝石':
+                if llm_result_str_raw[:2] != '寓意':
                     return Response({'ret': 17, 'errmsg': '大模型返回内容无法解析', 'data':None})
             else:
                 return Response({'ret': 17, 'errmsg': '大模型返回内容无法解析', 'data':None})
 
 
-            # 删去旧的推荐信息
-            report_found = Advice.objects.filter(user_id=userid, person_name=name)
-            if report_found.count() != 0:
-                report_found.delete()
-
 
             # 循环提取各个部分
-            parts = llm_result_str_raw.split('###')  # 测评报告的各个部分
+            # todo 寓意-分数
+            symbol_mark_dict = {}
+            parts = llm_result_str_raw.split('###')
             for i, part_string in enumerate(parts):
-                if '解释：' in part_string:
-                    pattern = r'^宝石\d*:\s*(.*)\s*匹配度:(\d+)%\s*解释：(.*)'
-                else:
-                    pattern = r'^宝石\d*:\s*(.*)\s*匹配度:(\d+)%\s*(.*)'
-                # pattern = r'^宝石\d*: (.*) 匹配度:(\d+)% 解释：(.*)'
+                pattern = r'寓意\d*:\s*\[*\s*(.*)\s*\[*\s*---\s*匹配度:\s*\[*\s*(\d+)\s*\[*\s*(.*)'
                 match = re.findall(pattern, part_string)
-                # print(match)
-                gem = match[0][0].replace(' ', '')
+                symbol = match[0][0].replace(' ', '')
                 mark = int(match[0][1])
-                reason = match[0][2]
+                symbol_mark_dict[symbol] = mark
+            scale_dict_values(symbol_mark_dict)
+            print(symbol_mark_dict)
 
-                # if i == 9:
-                #     new_advice = Advice.objects.create(user_id=userid, person_name=name,
-                #                                             gem_name='蓝宝石', mark=mark, 
-                #                                             reason=reason,
-                #                                             )
-                    
-                # else:
-                #     new_advice = Advice.objects.create(user_id=userid, person_name=name,
-                #                                             gem_name=gem, mark=mark, 
-                #                                             reason=reason,
-                #                                             )
+            # 获取所有宝石（合并后），根据包含的寓意，算加权分数
+            all_gem_name = list(Integrate_Gem_only_name_symbol(Gemstone.objects.filter()).values())
+            print(all_gem_name)
+            for gem in all_gem_name:
+                gem_name = gem['name']
+                gem_symbol = gem['symbol'].split()
+                if len(gem_symbol) == 0 or len(gem_symbol) > 3:
+                    return Response({'ret': 21, 'errmsg': '珠子寓意解析失败', 'data':None})
+                elif len(gem_symbol) == 3:
+                    weight = (0.5, 0.3, 0.2)
+                elif len(gem_symbol) == 2:
+                    weight = (0.6, 0.4)
+                elif len(gem_symbol) == 1:
+                    weight = (1,)
+                weighted_mark = 0
+                for i, w in enumerate(weight):
+                    weighted_mark += w * symbol_mark_dict[gem_symbol[i]]
+                
+                found_advice = Advice.objects.filter(user_id=userid, person_name=name,
+                                                        gem_name=gem_name)
+                if found_advice.count() == 0:
+                    new_advice = Advice.objects.create(user_id=userid, person_name=name,
+                                                            gem_name=gem_name, mark=weighted_mark, 
+                                                            )
+                else:
+                    found_advice.update(mark=weighted_mark)
 
-                new_advice = Advice.objects.create(user_id=userid, person_name=name,
-                                                        gem_name=gem, mark=mark, 
-                                                        reason=reason,
-                                                        )
-
-            adv_found = Advice.objects.filter(user_id=userid, person_name=name)
-            serializer = AdviceSerializer(instance=adv_found, many=True)
+            ret_found = Advice.objects.filter(user_id=userid, person_name=name).order_by('-mark')
+            serializer = AdviceSerializer(instance=ret_found, many=True)
                 
             return Response({'ret': 0, 'errmsg':None, 'data':list(serializer.data)})
         except Exception as e:
             print(repr(e))
-            return Response({'ret': -1, 'errmsg':'请检查提交的数据是否标准', 'data':None})   
+            return Response({'ret': -1, 'errmsg':'其他错误', 'data':None})   
 
 
 
@@ -620,8 +661,7 @@ class get_advice(APIView):
             return Response({'ret': 0, 'errmsg': None, 'advice': list(serializer.data)})
         except Exception as e:
             print(repr(e))
-            return Response({'ret': -1, 'errmsg': '请检查提交的数据是否标准', 'advice':None})   
-
+            return Response({'ret': -1, 'errmsg': '其他错误', 'advice':None})   
 
 
 
@@ -701,7 +741,7 @@ class get_advice_for_scheme(APIView):
                              })
         except Exception as e:
             print(repr(e))
-            return Response({'ret': -1, 'errmsg': '请检查提交的数据是否标准',
+            return Response({'ret': -1, 'errmsg': '其他错误',
                              'ding': None,
                              'yao': None,
                              'zi': None,
@@ -747,4 +787,4 @@ class get_advice_for_scheme(APIView):
 #             return Response({'ret': 0, 'errmsg': None, 'advice': list(serializer.data)})
 #         except Exception as e:
 #             print(repr(e))
-#             return Response({'ret': -1, 'errmsg': '请检查提交的数据是否标准', 'advice':None})   
+#             return Response({'ret': -1, 'errmsg': '其他错误', 'advice':None})   

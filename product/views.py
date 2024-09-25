@@ -223,6 +223,39 @@ def Integrate_Gem_mini(queryset: django.db.models.query.QuerySet) -> dict:
     return gem_dict
 
 
+# 按名称整合queryset中的珠，只保留name,symbol
+def Integrate_Gem_only_name_symbol(queryset: django.db.models.query.QuerySet) -> dict:
+    all_gem = queryset.values()  # 由dict构成的queryset
+    
+    gem_dict = {}  
+    # '珠名'：dict
+        # 这类珠子的共同信息字典
+    for gem in all_gem:
+        gem_name = gem['name']
+        
+        if gem_name not in gem_dict:
+            gem_dict[gem_name] = gem
+            del gem_dict[gem_name]['position']
+            del gem_dict[gem_name]['id']
+            del gem_dict[gem_name]['size']
+            del gem_dict[gem_name]['detail']
+            del gem_dict[gem_name]['typ']
+            del gem_dict[gem_name]['wuxing']
+            del gem_dict[gem_name]['material']
+            del gem_dict[gem_name]['loc']
+            del gem_dict[gem_name]['is_recommended']
+            del gem_dict[gem_name]['create_time']
+            del gem_dict[gem_name]['update_time']
+            del gem_dict[gem_name]['thumbnail']
+            del gem_dict[gem_name]['price']
+            del gem_dict[gem_name]['intro']
+            del gem_dict[gem_name]['inventory']
+            del gem_dict[gem_name]['sales']
+            del gem_dict[gem_name]['cover']
+
+    return gem_dict
+
+
 # -------------------------------------------------------------------
 # 获取宝石的所有类别
 # todo Redis

@@ -76,7 +76,7 @@ class update_user_info(APIView):
             return Response({'ret': 0, 'errmsg': None})   
         except Exception as e:
             print(repr(e))
-            return Response({'ret': -1, 'errmsg': '请检查提交的数据是否标准'})   
+            return Response({'ret': -1, 'errmsg': '其他错误'})   
 
 
 

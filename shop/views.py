@@ -43,7 +43,7 @@ class create_cart_from_parts(APIView):
             #     return Response({'ret': 4003, 'errmsg':'不存在的产品类型', 'cart_id':None})   
         except Exception as e:
             print(repr(e))
-            return Response({'ret': 40101, 'errmsg':'请检查提交的数据是否标准', 'cart_id':None})   
+            return Response({'ret': 40101, 'errmsg':'其他错误', 'cart_id':None})   
 
 
 # 创建购物车项（从挚礼）
@@ -88,7 +88,7 @@ class create_cart_from_gift(APIView):
 
         except Exception as e:
             print(repr(e))
-            return Response({'ret': 40201, 'errmsg':'请检查提交的数据是否标准', 'group_id':None, 'cart_id_list':None})   
+            return Response({'ret': 40201, 'errmsg':'其他错误', 'group_id':None, 'cart_id_list':None})   
 
 
 # 创建一个购物车项（从方案）
@@ -138,7 +138,7 @@ class create_cart_from_scheme(APIView):
 
         except Exception as e:
             print(repr(e))
-            return Response({'ret': 40301, 'errmsg':'请检查提交的数据是否标准', 'group_id':None, 'cart_id_list':None})   
+            return Response({'ret': 40301, 'errmsg':'其他错误', 'group_id':None, 'cart_id_list':None})   
 
 
 
@@ -341,7 +341,7 @@ class create_order(APIView):
             return Response({'ret': 0, 'errmsg':None, 'id': new_order.id, 'order_number':ordernumber})   
         except Exception as e:
             print(repr(e))
-            return Response({'ret': 42701, 'errmsg':'请检查提交的数据是否标准', 'id':None, 'order_number':None})
+            return Response({'ret': 42701, 'errmsg':'其他错误', 'id':None, 'order_number':None})
 
 
 # 直接从商品创建一个订单
@@ -390,7 +390,7 @@ class create_order_from_product(APIView):
             return Response({'ret': 0, 'errmsg':None, 'id': new_order.id, 'order_number':ordernumber})   
         except Exception as e:
             print(repr(e))
-            return Response({'ret': -1, 'errmsg':'请检查提交的数据是否标准', 'id':None, 'order_number':None})
+            return Response({'ret': -1, 'errmsg':'其他错误', 'id':None, 'order_number':None})
 
 '''
 
@@ -498,7 +498,7 @@ class create_address(APIView):
             return Response({'ret': 0, 'errmsg':None, 'id': new.id})   
         except Exception as e:
             print(repr(e))
-            return Response({'ret': -1, 'errmsg':'请检查提交的数据是否标准', 'id':None})   
+            return Response({'ret': -1, 'errmsg':'其他错误', 'id':None})   
 
 
 # 获取用户的所有地址
@@ -530,7 +530,7 @@ class update_address(APIView):
             return Response({'ret': 0, 'errmsg':None})   
         except Exception as e:
             print(repr(e))
-            return Response({'ret': -1, 'errmsg':'请检查提交的数据是否标准'})   
+            return Response({'ret': -1, 'errmsg':'其他错误'})   
 
 # 修改地址
 class delete_address(APIView):

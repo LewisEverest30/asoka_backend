@@ -339,6 +339,7 @@ class Advice(models.Model):
     class Meta:
         verbose_name = "珠推荐"
         verbose_name_plural = "珠推荐"
+        unique_together = (("user", "person_name", "gem_name"),)
 
 
 class AdviceSerializer(serializers.ModelSerializer):

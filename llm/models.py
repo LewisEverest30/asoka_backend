@@ -218,6 +218,8 @@ class EvalreportSerializer2(serializers.ModelSerializer):
     overall_1 = serializers.SerializerMethodField()
     overall_2 = serializers.SerializerMethodField()
     overall_3 = serializers.SerializerMethodField()
+    gem_advice = serializers.SerializerMethodField()
+
 
     def get_template(self, obj):
         default_value = {
@@ -277,7 +279,17 @@ class EvalreportSerializer2(serializers.ModelSerializer):
         }
         return ret
 
+    def get_gem_advice(self, obj):
+        eval_name = obj.evalcontent.name
+        adv_found = Advice.objects.filter(user_id=obj.user.id, person_name=eval_name).order_by('-mark')
 
+        if adv_found.count() == 0:
+                return []
+        else:
+            if adv_found.count() > 5:  # 截取最高的前五
+                adv_found = adv_found[:5]
+            serializer = AdviceSerializer(instance=adv_found, many=True)
+            return list(serializer.data)
 
     class Meta:
         model = Evalreport
@@ -365,4 +377,4 @@ class AdviceSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Advice
-        exclude = ['user', 'person_name']
+        exclude = ['user', 'person_name', 'reason']

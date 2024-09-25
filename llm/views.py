@@ -486,12 +486,14 @@ class get_certain_eval_report(APIView):
             name = info['name']
             # bug-f 查询时不能不考虑userid
             report_found = Evalreport.objects.filter(user_id=userid, evalcontent__name=name)
+            if report_found.count() == 0:
+                return Response({'ret': 3, 'errmsg': '没有该名字对应的测评报告', 'data':None})   
             serializer = EvalreportSerializer2(instance=report_found[0], many=False)
-            return Response({'ret': 0, 'data': serializer.data})
+            return Response({'ret': 0, 'errmsg': None, 'data': serializer.data})
 
         except Exception as e:
             print(repr(e))
-            return Response({'ret': -1, 'data':None})   
+            return Response({'ret': -1, 'errmsg': '其他错误', 'data':None})   
                 
 
 # ---------------------------------------------------------

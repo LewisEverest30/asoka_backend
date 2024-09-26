@@ -187,8 +187,17 @@ class start_chat(APIView):
                 except Exception as e:
                     return Response({'ret': 7, 'errmsg': '大模型故障', 'llm_msg':None})
                 
-                Chathistory.objects.create(user_id=userid, talker=0, msg=llm_result['content'])
-                return Response({'ret': 0, 'errmsg': None, 'llm_msg':llm_result['content']})
+                result_msg = llm_result['content']
+                Chathistory.objects.create(user_id=userid, talker=0, msg=result_msg)
+                
+                wenyan_index = result_msg.find('$')
+                return Response({'ret': 0, 
+                                 'errmsg': None, 
+                                 'llm_msg': {
+                                     'wenyan': result_msg[:wenyan_index],
+                                     'baihua': result_msg[wenyan_index+1:]
+                                 }
+                                 })
             # 有历史记录不可开始
             else:
                 return Response({'ret': 3, 'errmsg': '已存在聊天历史记录，请继续聊天或清空历史记录再开始新的聊天', 'llm_msg':None})
@@ -216,7 +225,7 @@ class continue_chat(APIView):
         userid = request.user['userid']
         info = json.loads(request.body)
         try:
-            msg = info['msg']
+            input_msg = info['msg']
             new_msgs = [{"role": "system", "content": settings.CHAT_PROMPT}, ]
 
             chathis_found = Chathistory.objects.filter(user_id=userid).order_by('create_time')
@@ -226,7 +235,7 @@ class continue_chat(APIView):
             # 有历史，可继续聊天
             else:
                 # 把这次用户说的存下来，注意不在chathis_found中
-                Chathistory.objects.create(user_id=userid, talker=1, msg=msg)
+                Chathistory.objects.create(user_id=userid, talker=1, msg=input_msg)
 
                 # 将八字信息作为第一条user消息（不在数据库中，但是实际的第一条消息）
                 try:
@@ -242,7 +251,7 @@ class continue_chat(APIView):
                     new_msgs.append({'role':role, 'content':his.msg})
 
                 # 添加当前这条消息
-                new_msgs.append({'role':'user', 'content':msg})
+                new_msgs.append({'role':'user', 'content':input_msg})
                 
                 # 与llm对话
                 try:
@@ -252,8 +261,17 @@ class continue_chat(APIView):
                 except Exception as e:
                     return Response({'ret': 7, 'errmsg': '大模型故障', 'llm_msg':None})
                 
-                Chathistory.objects.create(user_id=userid, talker=0, msg=llm_result['content'])
-                return Response({'ret': 0, 'errmsg': None, 'llm_msg':llm_result['content']})
+                result_msg = llm_result['content']
+                Chathistory.objects.create(user_id=userid, talker=0, msg=result_msg)
+                
+                wenyan_index = result_msg.find('$')
+                return Response({'ret': 0, 
+                                 'errmsg': None, 
+                                 'llm_msg': {
+                                     'wenyan': result_msg[:wenyan_index],
+                                     'baihua': result_msg[wenyan_index+1:]
+                                 }
+                                 })
         except Exception as e:
             print(repr(e))
             return Response({'ret': -1, 'errmsg': '其他错误', 'llm_msg':None})
@@ -589,7 +607,7 @@ class generate_advice(APIView):
 
 
             # 循环提取各个部分
-            # todo 寓意-分数
+            # todo-f 寓意-分数
             symbol_mark_dict = {}
             parts = llm_result_str_raw.split('###')
             for i, part_string in enumerate(parts):
@@ -628,8 +646,21 @@ class generate_advice(APIView):
                 else:
                     found_advice.update(mark=weighted_mark)
 
-            ret_found = Advice.objects.filter(user_id=userid, person_name=name).order_by('-mark')
-            serializer = AdviceSerializer(instance=ret_found, many=True)
+            adv_found = Advice.objects.filter(user_id=userid, person_name=name).order_by('-mark')
+
+            # todo 分位置展示
+            ret_list = []
+            adv_indexs = [-1, -1, -1, -1]
+            for i, position in enumerate([pos[0] for pos in Gemstone.Pos_choices[:-1]]):
+                for j, adv in enumerate(adv_found):
+                    if j in adv_indexs:
+                        continue
+                    gem_found_position = Gemstone.objects.filter(name=adv.gem_name).values_list('position', flat=True).distinct()
+                    if position in gem_found_position:
+                        ret_list.append(adv)
+                        adv_indexs[i] = j
+                        break       
+            serializer = AdviceSerializer(instance=ret_list, many=True)
                 
             return Response({'ret': 0, 'errmsg':None, 'data':list(serializer.data)})
         except Exception as e:
@@ -656,9 +687,24 @@ class get_advice(APIView):
             if len(adv_found) == 0:
                 return Response({'ret': 4051, 'errmsg': '不存在的人名', 'advice':None})
 
-            serializer = AdviceSerializer(instance=adv_found, many=True)
 
-            # print(serializer.data)
+            # todo 分位置展示
+            ret_list = []
+            adv_indexs = [-1 for _ in range(4)]
+            for i, position in enumerate([pos[0] for pos in Gemstone.Pos_choices[:-1]]):
+                print(ret_list)
+                print(adv_indexs)
+                for j, adv in enumerate(adv_found):
+                    if j in adv_indexs:
+                        print(f'{j} in adv_indexs')
+                        continue
+                    gem_found_position = Gemstone.objects.filter(name=adv.gem_name).values_list('position', flat=True).distinct()
+                    if position in gem_found_position:
+                        print(f'result append {adv}')
+                        ret_list.append(adv)
+                        adv_indexs[i] = j
+                        break       
+            serializer = AdviceSerializer(instance=ret_list, many=True)
 
             return Response({'ret': 0, 'errmsg': None, 'advice': list(serializer.data)})
         except Exception as e:
@@ -680,7 +726,7 @@ class get_advice_for_scheme(APIView):
         try:
             name = info['name']
 
-            advice = list(Advice.objects.filter(user_id=1, person_name=name).order_by('-mark').values('gem_name', 'mark'))
+            advice = list(Advice.objects.filter(user_id=userid, person_name=name).order_by('-mark').values('gem_name', 'mark'))
             if len(advice) == 0:
                 return Response({'ret': 4051, 'errmsg': '不存在的人名', 
                                 'ding': None,

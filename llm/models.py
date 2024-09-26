@@ -286,9 +286,28 @@ class EvalreportSerializer2(serializers.ModelSerializer):
         if adv_found.count() == 0:
                 return []
         else:
-            if adv_found.count() > 5:  # 截取最高的前五
-                adv_found = adv_found[:5]
-            serializer = AdviceSerializer(instance=adv_found, many=True)
+            # if adv_found.count() > 5:  # 截取最高的前五
+            #     adv_found = adv_found[:5]
+            
+            
+            # todo 分位置展示
+            ret_list = []
+            adv_indexs = [-1 for _ in range(4)]
+            for i, position in enumerate([pos[0] for pos in Gemstone.Pos_choices[:-1]]):
+                print(ret_list)
+                print(adv_indexs)
+                for j, adv in enumerate(adv_found):
+                    if j in adv_indexs:
+                        print(f'{j} in adv_indexs')
+                        continue
+                    gem_found_position = Gemstone.objects.filter(name=adv.gem_name).values_list('position', flat=True).distinct()
+                    if position in gem_found_position:
+                        print(f'result append {adv}')
+                        ret_list.append(adv)
+                        adv_indexs[i] = j
+                        break       
+            serializer = AdviceSerializer(instance=ret_list, many=True)
+            
             return list(serializer.data)
 
     class Meta:
@@ -322,10 +341,26 @@ class Chathistory(models.Model):
 
 class ChathistorySerializer(serializers.ModelSerializer):
     type = serializers.SerializerMethodField()
+    msg = serializers.SerializerMethodField()
 
     def get_type(self, obj):
         return 0
     
+    def get_msg(self, obj):
+        if obj.talker == 1:  # 用户说的话
+            msg = obj.msg
+            return {
+                'wenyan': '',
+                'baihua': msg
+            }
+        else:
+            msg = obj.msg
+            wenyan_index = msg.find('$')
+            return {
+                'wenyan': msg[:wenyan_index],
+                'baihua': msg[wenyan_index+1:]
+            }
+
     class Meta:
         model = Chathistory
         # fields = '__all__'

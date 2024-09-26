@@ -4,7 +4,7 @@
 
 import re
 
-def parse_component_string(component_string):
+'''def parse_component_string(component_string):
     # 正则表达式模式
     pattern = r'(\d+)\*(\w+)-(\d+)'
     
@@ -30,4 +30,14 @@ component_string = "3*珠-1 2*珠-2 1*手链-1"
 
 # 调用函数并打印结果
 parsed_components = parse_component_string(component_string)
-print(parsed_components)
+print(parsed_components)'''
+
+
+str1 = '12（12.5）'
+
+size_pattern = r'^(\d+)[\D.*|$]'
+size_pattern = r'^(\d+)\D*.*'
+match_size = re.findall(size_pattern, str1)
+print(match_size)
+size = int(match_size[0][0])
+print(size)

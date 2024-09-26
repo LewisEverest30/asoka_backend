@@ -739,7 +739,7 @@ class get_advice_for_scheme(APIView):
             for adv in advice:
                 mark_dict[adv['gem_name']] = adv['mark']
     
-
+            # 顶
             gem_ding = Gemstone.objects.filter(position='顶珠')
             gem_ding = gem_ding.annotate(
                 mark=Case(
@@ -748,8 +748,11 @@ class get_advice_for_scheme(APIView):
                     output_field=models.IntegerField()
                 )
             )
-            gem_ding = gem_ding.order_by('-mark').values('id', 'name', 'symbol', 'size', 'thumbnail', 'cover', 'intro', 'mark')
+            gem_ding = gem_ding.order_by('-mark').values('id', 'name', 'symbol', 'size', 'thumbnail', 'cover', 'intro', 'mark', 'price')
+            for gem in gem_ding:
+                gem['symbol'] = gem['symbol'].split()
 
+            # 腰
             gem_yao = Gemstone.objects.filter(position='腰珠')
             gem_yao = gem_yao.annotate(
                 mark=Case(
@@ -758,8 +761,11 @@ class get_advice_for_scheme(APIView):
                     output_field=models.IntegerField()
                 )
             )
-            gem_yao = gem_yao.order_by('-mark').values('id', 'name', 'symbol', 'size', 'thumbnail', 'cover', 'intro', 'mark')
+            gem_yao = gem_yao.order_by('-mark').values('id', 'name', 'symbol', 'size', 'thumbnail', 'cover', 'intro', 'mark', 'price')
+            for gem in gem_yao:
+                gem['symbol'] = gem['symbol'].split()
 
+            # 子
             gem_zi = Gemstone.objects.filter(position='子珠')
             gem_zi = gem_zi.annotate(
                 mark=Case(
@@ -768,8 +774,12 @@ class get_advice_for_scheme(APIView):
                     output_field=models.IntegerField()
                 )
             )
-            gem_zi = gem_zi.order_by('-mark').values('id', 'name', 'symbol', 'size', 'thumbnail', 'cover', 'intro', 'mark')
+            gem_zi = gem_zi.order_by('-mark').values('id', 'name', 'symbol', 'size', 'thumbnail', 'cover', 'intro', 'mark', 'price')
+            for gem in gem_zi:
+                gem['symbol'] = gem['symbol'].split()
 
+
+            # 配
             gem_pei = Gemstone.objects.filter(position='配珠')
             gem_pei = gem_pei.annotate(
                 mark=Case(
@@ -778,7 +788,9 @@ class get_advice_for_scheme(APIView):
                     output_field=models.IntegerField()
                 )
             )
-            gem_pei = gem_pei.order_by('-mark').values('id', 'name', 'symbol', 'size', 'thumbnail', 'cover', 'intro', 'mark')
+            gem_pei = gem_pei.order_by('-mark').values('id', 'name', 'symbol', 'size', 'thumbnail', 'cover', 'intro', 'mark', 'price')
+            for gem in gem_pei:
+                gem['symbol'] = gem['symbol'].split()
 
 
             return Response({'ret': 0, 'errmsg': None, 

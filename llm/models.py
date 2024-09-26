@@ -408,7 +408,7 @@ class AdviceSerializer(serializers.ModelSerializer):
             return ''
         else:
             # print(gem[0].thumbnail)
-            return str(gem[0].thumbnail)
+            return settings.MEDIA_URL + str(gem[0].thumbnail)
     
     class Meta:
         model = Advice

@@ -751,6 +751,7 @@ class get_advice_for_scheme(APIView):
             gem_ding = gem_ding.order_by('-mark').values('id', 'name', 'symbol', 'size', 'thumbnail', 'cover', 'intro', 'mark', 'price')
             for gem in gem_ding:
                 gem['symbol'] = gem['symbol'].split()
+                gem['thumbnail'] = settings.MEDIA_URL + gem['thumbnail']
 
             # 腰
             gem_yao = Gemstone.objects.filter(position='腰珠')
@@ -764,6 +765,7 @@ class get_advice_for_scheme(APIView):
             gem_yao = gem_yao.order_by('-mark').values('id', 'name', 'symbol', 'size', 'thumbnail', 'cover', 'intro', 'mark', 'price')
             for gem in gem_yao:
                 gem['symbol'] = gem['symbol'].split()
+                gem['thumbnail'] = settings.MEDIA_URL + gem['thumbnail']
 
             # 子
             gem_zi = Gemstone.objects.filter(position='子珠')
@@ -777,7 +779,7 @@ class get_advice_for_scheme(APIView):
             gem_zi = gem_zi.order_by('-mark').values('id', 'name', 'symbol', 'size', 'thumbnail', 'cover', 'intro', 'mark', 'price')
             for gem in gem_zi:
                 gem['symbol'] = gem['symbol'].split()
-
+                gem['thumbnail'] = settings.MEDIA_URL + gem['thumbnail']
 
             # 配
             gem_pei = Gemstone.objects.filter(position='配珠')
@@ -791,7 +793,7 @@ class get_advice_for_scheme(APIView):
             gem_pei = gem_pei.order_by('-mark').values('id', 'name', 'symbol', 'size', 'thumbnail', 'cover', 'intro', 'mark', 'price')
             for gem in gem_pei:
                 gem['symbol'] = gem['symbol'].split()
-
+                gem['thumbnail'] = settings.MEDIA_URL + gem['thumbnail']
 
             return Response({'ret': 0, 'errmsg': None, 
                              'ding': list(gem_ding),

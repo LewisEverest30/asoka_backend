@@ -5,6 +5,7 @@ from rest_framework.views import APIView
 from functools import reduce
 from django.db.models import Q
 from django.conf import settings
+from django.db.models import Case, When, F
 
 
 from .models import *
@@ -128,6 +129,8 @@ def Integrate_Gem_lite_for_product(queryset: django.db.models.query.QuerySet) ->
             del gem_dict[gem_name]['inventory']
             del gem_dict[gem_name]['thumbnail']
             del gem_dict[gem_name]['intro']
+            del gem_dict[gem_name]['intro_mini']
+            del gem_dict[gem_name]['intro_full']
 
             # bug-f 图片地址加media前缀
             cover_raw = gem_dict[gem_name].pop('cover')
@@ -217,6 +220,8 @@ def Integrate_Gem_mini(queryset: django.db.models.query.QuerySet) -> dict:
             del gem_dict[gem_name]['thumbnail']
             del gem_dict[gem_name]['price']
             del gem_dict[gem_name]['intro']
+            del gem_dict[gem_name]['intro_mini']
+            del gem_dict[gem_name]['intro_full']
             del gem_dict[gem_name]['inventory']
             del gem_dict[gem_name]['sales']
 
@@ -253,11 +258,32 @@ def Integrate_Gem_only_name_symbol(queryset: django.db.models.query.QuerySet) ->
             del gem_dict[gem_name]['thumbnail']
             del gem_dict[gem_name]['price']
             del gem_dict[gem_name]['intro']
+            del gem_dict[gem_name]['intro_mini']
+            del gem_dict[gem_name]['intro_full']
             del gem_dict[gem_name]['inventory']
             del gem_dict[gem_name]['sales']
             del gem_dict[gem_name]['cover']
 
     return gem_dict
+
+
+def rank_gem_for_different_position(position: str, mark_dict: dict):
+    gem_found = Gemstone.objects.filter(position=position)
+    gem_found = gem_found.annotate(
+        mark=Case(
+            *[When(name=k, then=v) for k, v in mark_dict.items()],  # *进行展开赋值
+            default=0,
+            output_field=models.IntegerField()
+        )
+    )
+    gem_found = gem_found.order_by('-mark').values('id', 'name', 'symbol', 'size', 'thumbnail', 
+                                                   'cover', 'intro', 'intro_mini', 'intro_full', 'mark', 'price')
+    for gem in gem_found:
+        gem['symbol'] = gem['symbol'].split()
+        gem['thumbnail'] = settings.MEDIA_URL + gem['thumbnail']
+        gem['cover'] = settings.MEDIA_URL + gem['cover']
+    return gem_found
+
 
 
 # -------------------------------------------------------------------

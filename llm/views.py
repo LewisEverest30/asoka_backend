@@ -7,14 +7,13 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.db.models import Q, F, Value
 from django.db.models.functions import Concat
-from django.db.models import Case, When, F
 from volcenginesdkarkruntime import Ark
 
 
 from .models import *
 from user.auth import MyJWTAuthentication, create_token
 from product.models import Gemstone
-from product.views import Integrate_Gem_only_name_symbol
+from product.views import Integrate_Gem_only_name_symbol, rank_gem_for_different_position
 
 
 from bazi.lunar import Lunar
@@ -165,7 +164,7 @@ class start_chat(APIView):
         userid = request.user['userid']
         try:
 
-            chathis_found = Chathistory.objects.filter(user_id=userid).order_by('create_time')
+            chathis_found = Chathistory.objects.filter(user_id=userid, is_active=True).order_by('create_time')
             
             # 没有历史记录可开始
             if chathis_found.count() == 0:
@@ -228,7 +227,7 @@ class continue_chat(APIView):
             input_msg = info['msg']
             new_msgs = [{"role": "system", "content": settings.CHAT_PROMPT}, ]
 
-            chathis_found = Chathistory.objects.filter(user_id=userid).order_by('create_time')
+            chathis_found = Chathistory.objects.filter(user_id=userid, is_active=True).order_by('create_time')
             # 无历史，需开启新聊天
             if chathis_found.count() == 0:
                 return Response({'ret': 3, 'errmsg': '无历史聊天记录，请开始一个聊天', 'llm_msg':None})
@@ -306,7 +305,7 @@ class get_chat_history(APIView):
     def get(self,request,*args,**kwargs):
         userid = request.user['userid']
 
-        his_found = Chathistory.objects.filter(user_id=userid).order_by('create_time')
+        his_found = Chathistory.objects.filter(user_id=userid, is_active=True).order_by('create_time')
         if his_found.count() == 0:
             # 没有聊天记录
             return Response({'ret': 44101, 'errmsg': '无聊天记录', 'data': None, 'report': None})
@@ -323,8 +322,9 @@ class clear_chat_history(APIView):
     def get(self,request,*args,**kwargs):
         userid = request.user['userid']
         try:
-            his_found = Chathistory.objects.filter(user_id=userid)
-            his_found.delete()
+            his_found = Chathistory.objects.filter(user_id=userid, is_active=True)
+            # his_found.delete()
+            his_found.update(is_active=False)
             return Response({'ret': 0})
         except Exception as e:
             print(repr(e))
@@ -740,64 +740,16 @@ class get_advice_for_scheme(APIView):
                 mark_dict[adv['gem_name']] = adv['mark']
     
             # 顶
-            gem_ding = Gemstone.objects.filter(position='顶珠')
-            gem_ding = gem_ding.annotate(
-                mark=Case(
-                    *[When(name=k, then=v) for k, v in mark_dict.items()],  # *进行展开赋值
-                    default=0,
-                    output_field=models.IntegerField()
-                )
-            )
-            gem_ding = gem_ding.order_by('-mark').values('id', 'name', 'symbol', 'size', 'thumbnail', 'cover', 'intro', 'mark', 'price')
-            for gem in gem_ding:
-                gem['symbol'] = gem['symbol'].split()
-                gem['thumbnail'] = settings.MEDIA_URL + gem['thumbnail']
-                gem['cover'] = settings.MEDIA_URL + gem['cover']
+            gem_ding = rank_gem_for_different_position('顶珠', mark_dict)
 
             # 腰
-            gem_yao = Gemstone.objects.filter(position='腰珠')
-            gem_yao = gem_yao.annotate(
-                mark=Case(
-                    *[When(name=k, then=v) for k, v in mark_dict.items()],  # *进行展开赋值
-                    default=0,
-                    output_field=models.IntegerField()
-                )
-            )
-            gem_yao = gem_yao.order_by('-mark').values('id', 'name', 'symbol', 'size', 'thumbnail', 'cover', 'intro', 'mark', 'price')
-            for gem in gem_yao:
-                gem['symbol'] = gem['symbol'].split()
-                gem['thumbnail'] = settings.MEDIA_URL + gem['thumbnail']
-                gem['cover'] = settings.MEDIA_URL + gem['cover']
+            gem_yao = rank_gem_for_different_position('腰珠', mark_dict)
 
             # 子
-            gem_zi = Gemstone.objects.filter(position='子珠')
-            gem_zi = gem_zi.annotate(
-                mark=Case(
-                    *[When(name=k, then=v) for k, v in mark_dict.items()],  # *进行展开赋值
-                    default=0,
-                    output_field=models.IntegerField()
-                )
-            )
-            gem_zi = gem_zi.order_by('-mark').values('id', 'name', 'symbol', 'size', 'thumbnail', 'cover', 'intro', 'mark', 'price')
-            for gem in gem_zi:
-                gem['symbol'] = gem['symbol'].split()
-                gem['thumbnail'] = settings.MEDIA_URL + gem['thumbnail']
-                gem['cover'] = settings.MEDIA_URL + gem['cover']
+            gem_zi = rank_gem_for_different_position('子珠', mark_dict)
 
             # 配
-            gem_pei = Gemstone.objects.filter(position='配珠')
-            gem_pei = gem_pei.annotate(
-                mark=Case(
-                    *[When(name=k, then=v) for k, v in mark_dict.items()],  # *进行展开赋值
-                    default=0,
-                    output_field=models.IntegerField()
-                )
-            )
-            gem_pei = gem_pei.order_by('-mark').values('id', 'name', 'symbol', 'size', 'thumbnail', 'cover', 'intro', 'mark', 'price')
-            for gem in gem_pei:
-                gem['symbol'] = gem['symbol'].split()
-                gem['thumbnail'] = settings.MEDIA_URL + gem['thumbnail']
-                gem['cover'] = settings.MEDIA_URL + gem['cover']
+            gem_pei = rank_gem_for_different_position('配珠', mark_dict)
 
             return Response({'ret': 0, 'errmsg': None, 
                              'ding': list(gem_ding),
@@ -813,8 +765,6 @@ class get_advice_for_scheme(APIView):
                              'zi': None,
                              'pei': None,                             
                              })   
-
-
 
 
 

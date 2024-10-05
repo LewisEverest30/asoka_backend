@@ -330,6 +330,7 @@ class Chathistory(models.Model):
     msg = models.CharField(verbose_name='信息', max_length=3000, null=False)
     create_time = models.DateTimeField(verbose_name='创建时间', auto_now_add=True) 
 
+    is_active = models.BooleanField(verbose_name='是否有效', null=False, default=True)
 
     def __str__(self) -> str:
         return self.user.name + '_' + str(self.create_time)

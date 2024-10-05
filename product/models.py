@@ -90,10 +90,14 @@ class Gemstone(models.Model):
                             upload_to='gemstone/')
     
     loc = models.CharField(verbose_name='产地', max_length=50, null=False, blank=False)
-    intro = models.TextField(verbose_name='介绍', null=False, blank=False)
     price = models.DecimalField(verbose_name='单价', null=False, blank=False, max_digits=7, decimal_places=2,
                                 validators=[MinValueValidator(1)])
-    
+
+    intro_mini = models.TextField(verbose_name='介绍（15字）', null=True, blank=False)
+    intro = models.TextField(verbose_name='介绍（35字）', null=False, blank=False)
+    intro_full = models.TextField(verbose_name='介绍（55字）', null=True, blank=False)
+
+
     is_recommended = models.BooleanField(verbose_name="是否为推荐商品", null=False, blank=False, default=False)
     inventory = models.IntegerField(verbose_name='库存数量', null=False, blank=False, default=0, validators=[MinValueValidator(0)])
     sales = models.IntegerField(verbose_name='销量', default=0, null=False, blank=False, validators=[MinValueValidator(0)])
@@ -162,10 +166,13 @@ class Bracelet(models.Model):
                             upload_to='bracelet/')
     
     loc = models.CharField(verbose_name='产地', max_length=50, null=False, blank=False)
-    intro = models.TextField(verbose_name='介绍', null=False, blank=False)
     price = models.DecimalField(verbose_name='单价', null=False, blank=False, max_digits=7, decimal_places=2,
                                 validators=[MinValueValidator(1)])
-    
+
+    intro_mini = models.TextField(verbose_name='介绍（15字）', null=True, blank=False)
+    intro = models.TextField(verbose_name='介绍（35字）', null=False, blank=False)
+    intro_full = models.TextField(verbose_name='介绍（55字）', null=True, blank=False)
+
     is_recommended = models.BooleanField(verbose_name="是否为推荐商品", null=False, blank=False, default=False)
     inventory = models.IntegerField(verbose_name='库存数量', null=False, blank=False, default=0, validators=[MinValueValidator(0)])
     sales = models.IntegerField(verbose_name='销量', default=0, null=False, blank=False, validators=[MinValueValidator(0)])
@@ -231,10 +238,13 @@ class Stamp(models.Model):
                             upload_to='stamp/')
     
     loc = models.CharField(verbose_name='产地', max_length=50, null=False, blank=False)
-    intro = models.TextField(verbose_name='介绍', null=False, blank=False)
     price = models.DecimalField(verbose_name='单价', null=False, blank=False, max_digits=7, decimal_places=2,
                                 validators=[MinValueValidator(1)])
-    
+
+    intro_mini = models.TextField(verbose_name='介绍（15字）', null=True, blank=False)
+    intro = models.TextField(verbose_name='介绍（35字）', null=False, blank=False)
+    intro_full = models.TextField(verbose_name='介绍（55字）', null=True, blank=False)
+
     is_recommended = models.BooleanField(verbose_name="是否为推荐商品", null=False, blank=False, default=False)
     inventory = models.IntegerField(verbose_name='库存数量', null=False, blank=False, default=0, validators=[MinValueValidator(0)])
     sales = models.IntegerField(verbose_name='销量', default=0, null=False, blank=False, validators=[MinValueValidator(0)])
@@ -289,7 +299,9 @@ class Gift(models.Model):
     detail = models.ImageField(verbose_name='详细介绍（长图）', null=True, blank=False,
                             upload_to='gift/')
 
-    intro = models.TextField(verbose_name='介绍', null=False, blank=False)
+    intro_mini = models.TextField(verbose_name='介绍（15字）', null=True, blank=False)
+    intro = models.TextField(verbose_name='介绍（35字）', null=False, blank=False)
+    intro_full = models.TextField(verbose_name='介绍（55字）', null=True, blank=False)
     
     price = models.DecimalField(verbose_name='单价', null=False, blank=False, max_digits=7, decimal_places=2,
                                 validators=[MinValueValidator(1)])
@@ -428,13 +440,13 @@ class GiftPicSerializer(serializers.ModelSerializer):
 # --------------------------------------------------------------------------------------------
 
 # 珠 序列化器
-class GemstoneSerializer1(serializers.ModelSerializer):
+'''class GemstoneSerializer1(serializers.ModelSerializer):
     # type = serializers.CharField(source='typ')
     class Meta:
         model = Gemstone
-        fields = ['id', 'name', 'symbol', 'position', 'size', 'thumbnail', 'cover', 'intro', 'price']
+        fields = ['id', 'name', 'symbol', 'position', 'size', 'thumbnail', 'cover', 'price']
         # exclude = ['user', 'evalcontent']
-
+'''
 class GemstoneSerializer2(serializers.ModelSerializer):
     type = serializers.CharField(source='typ')
     pics = serializers.SerializerMethodField()
@@ -459,7 +471,7 @@ class GemstoneSerializer3(serializers.ModelSerializer):
 
     class Meta:
         model = Gemstone
-        fields = ['product_type', 'id', 'name', 'cover', 'intro', 'price']
+        fields = ['product_type', 'id', 'name', 'cover', 'intro', 'intro_mini', 'intro_full', 'price']
 
 
 
@@ -513,7 +525,7 @@ class BraceletSerializer3(serializers.ModelSerializer):
 
     class Meta:
         model = Bracelet
-        fields = ['product_type', 'id', 'name', 'cover', 'intro', 'price']
+        fields = ['product_type', 'id', 'name', 'cover', 'intro', 'intro_mini', 'intro_full', 'price']
 
 class BraceletSerializer_mini(serializers.ModelSerializer):
     class Meta:
@@ -574,7 +586,7 @@ class StampSerializer3(serializers.ModelSerializer):
 
     class Meta:
         model = Stamp
-        fields = ['product_type', 'id', 'name', 'cover', 'intro', 'price']
+        fields = ['product_type', 'id', 'name', 'cover', 'intro', 'intro_mini', 'intro_full', 'price']
 
 class StampSerializer_mini(serializers.ModelSerializer):
     class Meta:
@@ -662,7 +674,7 @@ class GiftSerializer3(serializers.ModelSerializer):
 
     class Meta:
         model = Gift
-        fields = ['product_type', 'id', 'name', 'cover', 'intro', 'price']
+        fields = ['product_type', 'id', 'name', 'cover', 'intro', 'intro_mini', 'intro_full', 'price']
 
 class GiftSerializer_mini(serializers.ModelSerializer):
     class Meta:

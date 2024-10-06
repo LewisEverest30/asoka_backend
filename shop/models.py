@@ -177,7 +177,7 @@ class Cart(models.Model):
         verbose_name_plural = "购物车"
 
 
-class CartSerializer(serializers.ModelSerializer):
+'''class CartSerializer(serializers.ModelSerializer):
     type = serializers.CharField(source='typ')
     product_id = serializers.SerializerMethodField()
     pic = serializers.SerializerMethodField()
@@ -229,7 +229,7 @@ class CartSerializer(serializers.ModelSerializer):
         fields = ['id', 'type', 'product_id', 'name', 'pic', 'intro', 'component', 'quantity', 'cost']
         # fields = ['id', 'type', 'product_id', 'name', 'intro', 'quantity', 'cost']
         # exclude = ['user', 'evalcontent']
-
+'''
 
 
 class OrderSerializer1(serializers.ModelSerializer):

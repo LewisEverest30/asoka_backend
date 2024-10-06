@@ -644,22 +644,8 @@ class GiftSerializer2(serializers.ModelSerializer):
                 'product_type': match[1],
                 'product_id': int(match[2]),
             }
-            if product_dict['product_type'] == '珠':
-                product = Gemstone.objects.get(id=product_dict['product_id'])
-            elif product_dict['product_type'] == '手链':
-                product = Bracelet.objects.get(id=product_dict['product_id'])
-            elif product_dict['product_type'] == '印章':
-                product = Stamp.objects.get(id=product_dict['product_id'])
-            else:
-                continue
-            product_dict['product_name'] = product.name
-            product_dict['thumbnail'] = str(product.thumbnail)
-            product_dict['loc'] = product.loc
-            product_dict['intro_mini'] = product.intro_mini
-            product_dict['intro'] = product.intro
-            product_dict['intro_full'] = product.intro_full
-            product_dict['price'] = product.price
-            
+            from .utils import get_cart_component_product
+            get_cart_component_product(product_dict=product_dict)
             component_list.append(product_dict)
         return component_list
 

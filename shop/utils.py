@@ -2,6 +2,7 @@ import django
 import datetime
 from django.forms.models import model_to_dict
 from django.db import transaction
+from django.conf import settings
 
 from .models import *
 
@@ -20,7 +21,7 @@ def cart_to_dict_full(cart_obj) -> dict:
     # id, thumbnail, name, loc, intro,price
     if product_obj is not None:
         raw_dict['product_id'] = product_obj.id
-        raw_dict['thumbnail'] = str(product_obj.thumbnail)
+        raw_dict['thumbnail'] = settings.MEDIA_URL + str(product_obj.thumbnail)
         raw_dict['product_name'] = str(product_obj.name)
         raw_dict['loc'] = str(product_obj.loc)
         raw_dict['intro'] = str(product_obj.intro)
@@ -62,7 +63,7 @@ def cart_to_dict_lite(cart_obj) -> dict:
     # 精简掉产地
     if product_obj is not None:
         raw_dict['product_id'] = product_obj.id
-        raw_dict['thumbnail'] = str(product_obj.thumbnail)
+        raw_dict['thumbnail'] = settings.MEDIA_URL + str(product_obj.thumbnail)
         raw_dict['product_name'] = str(product_obj.name)
         raw_dict['intro'] = str(product_obj.intro)
         raw_dict['price'] = str(product_obj.price)
@@ -151,7 +152,7 @@ def Group_Carts_lite(cart_items: django.db.models.query.QuerySet) -> dict:
     return grouped_items
 
 
-
+# 下单时，检查库存是否不足，满足条件则更新库存
 def Check_Update_Inventory(cart_items: django.db.models.query.QuerySet):
     # 合并产品购买数量
     gem_integrated_items = {}   # id: quantity
@@ -203,6 +204,7 @@ def Check_Update_Inventory(cart_items: django.db.models.query.QuerySet):
             item.save()
 
 
+# 取消订单时，恢复库存量
 def Recover_Inventory(cart_items: django.db.models.query.QuerySet):
     # 合并产品购买数量
     # print(cart_items)

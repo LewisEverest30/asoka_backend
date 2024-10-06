@@ -1,10 +1,28 @@
-import django
 from django.db.models import Q
 import openpyxl
 from django.core.files import File
 import re
+from django.conf import settings
 
-from .models import *
+from .models import Gemstone, Bracelet, Stamp
+
+
+def get_cart_component_product(product_dict: dict):
+    if product_dict['product_type'] == '珠':
+        product = Gemstone.objects.get(id=product_dict['product_id'])
+    elif product_dict['product_type'] == '手链':
+        product = Bracelet.objects.get(id=product_dict['product_id'])
+    elif product_dict['product_type'] == '印章':
+        product = Stamp.objects.get(id=product_dict['product_id'])
+
+    product_dict['product_name'] = product.name
+    product_dict['thumbnail'] = settings.MEDIA_URL + str(product.thumbnail)
+    product_dict['loc'] = product.loc
+    product_dict['intro_mini'] = product.intro_mini
+    product_dict['intro'] = product.intro
+    product_dict['intro_full'] = product.intro_full
+    product_dict['price'] = product.price
+
 
 
 def import_gemstone_data(xls_path: str, photo_path: str):

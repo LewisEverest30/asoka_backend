@@ -655,7 +655,9 @@ class GiftSerializer2(serializers.ModelSerializer):
             product_dict['product_name'] = product.name
             product_dict['thumbnail'] = str(product.thumbnail)
             product_dict['loc'] = product.loc
+            product_dict['intro_mini'] = product.intro_mini
             product_dict['intro'] = product.intro
+            product_dict['intro_full'] = product.intro_full
             product_dict['price'] = product.price
             
             component_list.append(product_dict)

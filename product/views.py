@@ -276,12 +276,13 @@ def rank_gem_for_different_position(position: str, mark_dict: dict):
             output_field=models.IntegerField()
         )
     )
-    gem_found = gem_found.order_by('-mark').values('id', 'name', 'symbol', 'size', 'thumbnail', 
+    gem_found = gem_found.order_by('-mark').values('id', 'name', 'symbol', 'size', 'thumbnail', 'photo_12',
                                                    'cover', 'intro', 'intro_mini', 'intro_full', 'mark', 'price')
     for gem in gem_found:
         gem['symbol'] = gem['symbol'].split()
         gem['thumbnail'] = settings.MEDIA_URL + gem['thumbnail']
         gem['cover'] = settings.MEDIA_URL + gem['cover']
+        gem['photo_12'] = settings.MEDIA_URL + gem['photo_12']
     return gem_found
 
 

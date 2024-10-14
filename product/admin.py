@@ -28,7 +28,7 @@ class GemstonePicInline(admin.TabularInline):
 
 
 class GemAdmin(admin.ModelAdmin, ExportExcelMixin):
-    list_display = ("id", "name", "thumbnailpic", 'coverpic', 'position', 'size', 'inventory',
+    list_display = ("id", "name", "thumbnailpic", 'position', 'size', 'inventory',
                     'price', 'sales')
     exclude = ()
     readonly_fields = ("id", 'create_time', 'update_time')

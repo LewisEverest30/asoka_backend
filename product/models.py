@@ -84,6 +84,9 @@ class Gemstone(models.Model):
 
     cover = models.ImageField(verbose_name='封面图片（其他图片在下方产品摄影里添加）', null=True, blank=False,
                             upload_to='gemstone/')
+    photo_12 = models.ImageField(verbose_name='1:2图片（方案定制时使用）', null=True, blank=False,
+                            upload_to='gemstone/1_2/')
+
     thumbnail = models.ImageField(verbose_name='缩略图', null=True, blank=False,
                             upload_to='gemstone/thumbnail/')
     detail = models.ImageField(verbose_name='详细介绍（长图）', null=True, blank=False,
@@ -289,8 +292,8 @@ class Gift(models.Model):
                            validators=[Items_Validator_symbol],
                            null=True, blank=False)
     
-    wuxing = models.CharField(verbose_name='五行/色系', max_length=20, 
-                           choices=Wu_choices, null=True, blank=False)
+    # wuxing = models.CharField(verbose_name='五行/色系', max_length=20, 
+    #                        choices=Wu_choices, null=True, blank=False)
     
     cover = models.ImageField(verbose_name='封面图片（其他图片在下方产品摄影里添加）', null=True, blank=False,
                             upload_to='gift/')

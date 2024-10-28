@@ -536,6 +536,10 @@ class BraceletSerializer_mini(serializers.ModelSerializer):
         fields = ['id', 'name', 'cover',]
         # exclude = ['user', 'evalcontent']
 
+class BraceletSerializer4(serializers.ModelSerializer):
+    class Meta:
+        model = Bracelet
+        fields = ['id', 'name', 'symbol', 'thumbnail', 'cover', 'intro', 'intro_mini', 'intro_full', 'price']
 
 # ----------------------------------------------------------------
 # 印章 序列化器

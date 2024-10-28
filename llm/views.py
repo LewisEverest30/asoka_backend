@@ -12,7 +12,7 @@ from volcenginesdkarkruntime import Ark
 
 from .models import *
 from user.auth import MyJWTAuthentication, create_token
-from product.models import Gemstone
+from product.models import Gemstone, Bracelet, BraceletSerializer4
 from product.views import Integrate_Gem_only_name_symbol, rank_gem_for_different_position
 
 
@@ -733,6 +733,7 @@ class get_advice_for_scheme(APIView):
                                 'yao': None,
                                 'zi': None,
                                 'pei': None,
+                                'bracelet': None
                                  })
 
             mark_dict = {}  # 珠名-评分 字典
@@ -751,11 +752,17 @@ class get_advice_for_scheme(APIView):
             # 配
             gem_pei = rank_gem_for_different_position('配珠', mark_dict)
 
+            # 手链
+            bracelets = Bracelet.objects.filter()
+            bracelet_serializer = BraceletSerializer4(instance=bracelets, many=True)
+
+
             return Response({'ret': 0, 'errmsg': None, 
-                             'ding': list(gem_ding),
-                             'yao': list(gem_yao),
-                             'zi': list(gem_zi),
-                             'pei': list(gem_pei),
+                             'ding': list(gem_ding) if len(gem_ding) <= 5 else list(gem_ding)[0:5],
+                             'yao': list(gem_yao) if len(gem_yao) <= 5 else list(gem_yao)[0:5],
+                             'zi': list(gem_zi) if len(gem_zi) <= 5 else list(gem_zi)[0:5],
+                             'pei': list(gem_pei) if len(gem_pei) <= 5 else list(gem_pei)[0:5],
+                             'bracelet': list(bracelet_serializer.data)
                              })
         except Exception as e:
             print(repr(e))
@@ -763,7 +770,8 @@ class get_advice_for_scheme(APIView):
                              'ding': None,
                              'yao': None,
                              'zi': None,
-                             'pei': None,                             
+                             'pei': None,
+                             'bracelet': None                     
                              })   
 
 

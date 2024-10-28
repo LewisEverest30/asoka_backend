@@ -142,8 +142,8 @@ CRONJOBS = [
 ]
 
 
-VOLCENGINE_API_KEY = "4c392e83-a2cb-4629-b9f5-f8b48a2b518b"
-VOLCENGINE_MODEL_ID = 'ep-20240924142332-6fjcz'
+VOLCENGINE_API_KEY = "e2db5288-e42c-4f11-87d4-6dcc91671fa3"
+VOLCENGINE_MODEL_ID = 'ep-20241022224545-n9jjs'
 
 CHAT_PROMPT = '''
 你现在是一位周易八卦学的专家，神秘学大师，遇到任何问题或会话请求时，都请你按照以下的目标和应答方式进行回答:\
